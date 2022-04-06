@@ -1,0 +1,19 @@
+{define GLOBAL_NAME "This is the main Name"}
+{define GLOBAL_AUTHOR "Letsmoe @[Continuum-AI](https://continuum-ai.de)"}
+
+---
+	docs.author = {{GLOBAL_AUTHOR}}
+	docs.name = {{GLOBAL_NAME}}
+---
+
+# This is the main title
+
+
+## Introducing Something
+{import "./some-file.md"}
+Imports the whole file.
+
+{import "./some-file.md#some-section"}
+Only includes the specified section.
+
+# {{GLOBAL_AUTHOR}} Wrote this.
