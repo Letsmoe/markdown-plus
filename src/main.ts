@@ -11,7 +11,7 @@ const globals = {
 	"*": (scope : {}, ...operands : any[]) => operands.reduce((acc, curr) => acc * curr, 1),
 	"/": (scope : {}, ...operands : any[]) => operands.reduce((acc, curr) => acc / curr),
 	"print": (scope : {}, ...operands : any[]) => {
-		console.log(operands.map(x => x.valueOf()).join(" "))
+		console.log(operands.map(x => x).join(" "))
 	},
 	"<": (scope : {}, ...operands : any[]) => operands.reduce((acc, curr) => acc < curr),
 	">": (scope : {}, ...operands : any[]) => operands.reduce((acc, curr) => acc > curr),
@@ -31,15 +31,15 @@ const globals = {
 		}
 	},
 	"copy": (scope : {}, reference : Variable) => {
-		return reference.valueOf();
+		return reference;
 	},
 	"function": (scope : {}, name : string, argsNames : any[], body : any = undefined) => {
-		if (scope[name.valueOf()] === undefined) {
-			scope[name.valueOf()] = (fnScope : {}, ...args : any[]) => {
+		if (scope[name] === undefined) {
+			scope[name] = (fnScope : {}, ...args : any[]) => {
 				const fnLocalScope = {
 					...fnScope,
 					...args
-						.map((arg, index) => [argsNames[index], args[index].valueOf()])
+						.map((arg, index) => [argsNames[index], args[index]])
 						.reduce((acc, [arg, val]) => ({ ...acc, [arg]: val }), {}),
 				};
 				return evalExpression(body, fnLocalScope);
@@ -50,17 +50,17 @@ const globals = {
 	},
 	define: (scope: {}, name:string, value: any) => {
 		if (scope[name] === undefined) {
-			scope[name.valueOf()] = new Variable(name, value);
+			scope[name] = new Variable(name, value);
 		} else {
 			throw new Error(`Name already defined in scope: ${name}`);
 		}
 	},
 	set: (scope : {}, name : any, value : any) => {
-		scope[name.name.valueOf()].setValue(value);
+		scope[name].setValue(value);
 	},
 	import: function(scope : {}, pathName : string, moduleNames : string[]) {
 		// Imports a file and parses this file, adds methods to the scope.
-		let result = this.fetch(scope, pathName)
+		let result = globals.fetch(scope, pathName)
 		let [output, childScope] = evaluate(result);
 		for (const name of moduleNames) {
 			if (!scope[name]) {
@@ -97,6 +97,25 @@ const globals = {
 			}
 			evalExpression(executionMethod, loopScope)
 		}
+	},
+	if: (scope : {}, ...conditions : any[]) => {
+		console.log("HELLO");
+		
+		console.log(conditions) // [ [ [ '=', 0, 0 ], 1 ], [ 'else', [ '+', 2, 4 ] ] ]
+
+		for (const condition of conditions) {
+			let cond = condition[0];
+			let result = condition[1];
+			if (cond === "else") {
+				// Else stack
+				return evalExpression(result, scope);
+			} else {
+				let isTrue = evalExpression(cond, scope);
+				if (isTrue) {
+					return evalExpression(result, scope);
+				}
+			}
+		}
 	}
 };
 
@@ -122,6 +141,7 @@ function evalExpression(astExpression : any[] | string, scope : {}) {
 		return astExpression in scope ? scope[astExpression] : astExpression;
 	}
 	const operation = astExpression[0];
+	
 	let argsArray = [];
 
 	if (operation !== "function" && operation !== "for") {
@@ -132,14 +152,19 @@ function evalExpression(astExpression : any[] | string, scope : {}) {
 	} else {
 		argsArray = astExpression
 	}
-
-	if (!(operation in scope)) return astExpression;
 	
-	return scope[operation](scope, ...argsArray.slice(1));
+	if (!(operation in scope)) return astExpression;
+	if (scope[operation]) {
+		return scope[operation].valueOf()(scope, ...argsArray.slice(1));
+	} else {
+		throw new ReferenceError(`Method is not defined in scope "${operation}"`);
+	}
 }
 
 const input = `
-{import "./test.mdp" {"add" "multiply"}}
+{import "./test.mdp" {"multiply" "fibo"}}
+
+{print {fibo 5}}
 
 {print {multiply {multiply {multiply 1 2} 3} 3}}
 

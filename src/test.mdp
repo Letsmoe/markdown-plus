@@ -23,3 +23,10 @@
 
 {function multiply {a b}
 	{* a b}}
+
+{function fibo {a b} 
+	{cond
+		{{= n 0} 0}
+		{{= n 1} 1}
+		{true {+ {fibo {- n 1}} {fibo {- n 2}}}}
+    }}
