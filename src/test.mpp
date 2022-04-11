@@ -1,0 +1,10 @@
+for (let i = 0; i < 5; i++) {
+	printf("%d", i);
+
+	print(2 + 5.5);
+}
+
+let variableName = "Value";
+function defaultFunction(arg1, arg2) {
+	print(arg1 * 2);
+}
