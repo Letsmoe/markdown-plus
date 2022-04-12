@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="./style/main.css">
+	<title>Test</title>
+	<script src="./js/writer.js"></script>
+</head>
+
+<body>
+	<div class="column">
+		<div class="editor">
+			<textarea id="editing" spellcheck="false" oninput="update(this.value); sync_scroll(this);"
+				onscroll="sync_scroll(this);" onkeydown="check_tab(this, event);"></textarea>
+			<pre><code id="highlighting-content" class="highlight"></code></pre>
+		</div>
+	</div>
+	<div class="column">
+		<div class="tree-view"></div>
+		<div class="temp-console"></div>
+	</div>
+</body>
+<script src="./js/tree.js"></script>
+<script type="module">
+	import {
+		InputStream
+	} from "./lib/input-stream.js";
+	import {
+		TokenStream
+	} from "./lib/token-stream.js";
+	import {
+		parse
+	} from "./lib/parser.js";
+	import {
+		evaluate,
+		Environment
+	} from "./lib/interpreter.js";
+	const textarea = document.querySelector("textarea");
+	const tempConsole = document.querySelector(".temp-console");
+
+	const write = (txt) => tempConsole.appendChild(_("pre", {}, {
+		innerText: txt
+	}));
+	const globalEnv = new Environment()
+	globalEnv.def("print", write);
+
+	textarea.addEventListener("input", (e) => {
+		let value = e.currentTarget.value;
+		const stream = new InputStream(value);
+		const tokens = new TokenStream(stream)
+
+		const copyTokens = new TokenStream(new InputStream(value))
+		const tokenized = []
+		while (copyTokens.peek()) {
+			tokenized.push(copyTokens.next())
+		}
+		console.log(tokenized);
+
+		const parsed = parse(tokens);
+		Array.from(tempConsole.getElementsByTagName("*")).forEach(element => {
+			element.remove()
+		});
+		Array.from(document.querySelector(".tree-view").getElementsByTagName("*")).forEach(element => {
+			element.remove()
+		});
+		makeTree(parsed)
+		var t0 = performance.now();
+		evaluate(parsed, globalEnv)
+		var time = performance.now() - t0
+		write(`Execution Took: ${time}ms`)
+	})
+	textarea.value = `
+# Function declaration with (func keyword)
+fib = func (n) {
+	if n < 2 then n else fib(n - 1) + fib(n - 2);
+};
+# Variable Declaration
+x = 5 ** 2;
+print(fib(20));`
+	textarea.dispatchEvent(new Event("input"))
+</script>
+
+</html>

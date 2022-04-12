@@ -7,7 +7,8 @@ class TokenStream {
 		"while",
 		"let",
 		"const",
-		"function",
+		"func",
+		"then",
 		"for",
 	];
 	private current: string;
@@ -28,7 +29,11 @@ class TokenStream {
 		);
 	}
 	private is_op_char(ch) {
-		return "+-*/%=&|<>!".indexOf(ch) >= 0;
+		return (
+			["+", "-", "*", "/", "%", "=", "&", "|", "<", ">", "!"].indexOf(
+				ch
+			) >= 0
+		);
 	}
 	private is_punc(ch) {
 		return ",;(){}[]".indexOf(ch) >= 0;

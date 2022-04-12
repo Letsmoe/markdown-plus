@@ -1,0 +1,99 @@
+* {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
+}
+
+.column {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  width: 50%;
+}
+
+.temp-console {
+  height: 50%;
+  width: 100%;
+  border-top: 3px solid #ccc;
+}
+
+.temp-console pre {
+  font-size: 16px;
+  color: #000;
+  padding: 10px;
+}
+
+.tree-view {
+  overflow: auto;
+  width: 100%;
+  height: 50%;
+  padding: 10px;
+}
+
+.tree-view .tree-key {
+  color: #B58900;
+}
+
+.tree-view .tree-key::after {
+  content: ":";
+  font-size: 16px;
+  color: #ccc;
+  margin-right: 4px;
+}
+
+.tree-view .tree-value {
+  color: #2AA198;
+}
+
+.editor {
+  position: relative;
+  width: 100%;
+  border-right: 3px solid #ccc;
+  height: 100%;
+}
+
+.editor textarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  padding-left: 25px;
+  font-family: monospace;
+  resize: none;
+  caret-color: #000;
+  color: transparent;
+  background: transparent;
+}
+
+.editor .highlight {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  padding-left: 25px;
+  left: 0;
+  font-size: 16px;
+  font-family: monospace;
+}
+/*# sourceMappingURL=main.css.map */

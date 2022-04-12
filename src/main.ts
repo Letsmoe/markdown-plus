@@ -1,8 +1,9 @@
 import {InputStream} from "./input-stream.js";
 import {TokenStream} from "./token-stream.js";
+import {parse} from "./parser.js";
 
 const code = `
-const x = 4 + 5.5;
+x = 4 + 5.5 ** 2;
 
 # for (let i = 0; i < 5; i++) {
 # 	printf("%d", i);
@@ -18,9 +19,9 @@ const x = 4 + 5.5;
 const stream = new InputStream(code);
 const tokens = new TokenStream(stream)
 
-while (tokens.peek()) {
-	console.log(tokens.next());
-}
+const parsed = parse(tokens);
+console.log(parsed);
+
 
 
 //var lex = new Lexer(code);
