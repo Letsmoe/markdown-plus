@@ -38,6 +38,7 @@
 		evaluate,
 		Environment
 	} from "./lib/interpreter.js";
+	import {make_js} from "./lib/transpiler.js";
 	const textarea = document.querySelector("textarea");
 	const tempConsole = document.querySelector(".temp-console");
 
@@ -57,7 +58,6 @@
 		while (copyTokens.peek()) {
 			tokenized.push(copyTokens.next())
 		}
-		console.log(tokenized);
 
 		const parsed = parse(tokens);
 		Array.from(tempConsole.getElementsByTagName("*")).forEach(element => {
@@ -71,6 +71,11 @@
 		evaluate(parsed, globalEnv)
 		var time = performance.now() - t0
 		write(`Execution Took: ${time}ms`)
+		const jsCode = make_js(parsed);
+		t0 = performance.now()
+		new Function(jsCode)()
+		time = performance.now() - t0
+		write(`Transpilation Took: ${time}ms`)
 	})
 	textarea.value = `
 # Function declaration with (func keyword)
@@ -79,7 +84,7 @@ fib = func (n) {
 };
 # Variable Declaration
 x = 5 ** 2;
-print(fib(20));`
+print(fib(30));`
 	textarea.dispatchEvent(new Event("input"))
 </script>
 
