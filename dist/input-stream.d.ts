@@ -7,6 +7,7 @@ declare class InputStream {
     next(): string;
     peek(): string;
     eof(): boolean;
+    reset(): void;
     croak(msg: string): void;
 }
 export { InputStream };

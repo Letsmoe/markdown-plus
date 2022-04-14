@@ -1,0 +1,1 @@
+nasm -f elf64 ./src/assembly/x64.asm -o ./src/assembly/x64.o && ld ./src/assembly/x64.o -o ./src/assembly/x64 && ./src/assembly/x64

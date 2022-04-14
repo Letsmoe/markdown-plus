@@ -15,7 +15,7 @@ interface ASTToken {
 }
 
 function make_js(exp) {
-	return js(exp);
+	return "const print = (...args) => console.log(...args);" + js(exp);
 
 	function js(exp) {
 		switch (exp.type) {

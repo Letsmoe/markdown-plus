@@ -52,12 +52,12 @@
 		let value = e.currentTarget.value;
 		const stream = new InputStream(value);
 		const tokens = new TokenStream(stream)
-
-		const copyTokens = new TokenStream(new InputStream(value))
 		const tokenized = []
-		while (copyTokens.peek()) {
-			tokenized.push(copyTokens.next())
+		while (tokens.peek()) {
+			tokenized.push(tokens.next())
 		}
+
+		stream.reset()
 
 		const parsed = parse(tokens);
 		Array.from(tempConsole.getElementsByTagName("*")).forEach(element => {
@@ -84,7 +84,7 @@ fib = func (n) {
 };
 # Variable Declaration
 x = 5 ** 2;
-print(fib(30));`
+print(fib(22));`
 	textarea.dispatchEvent(new Event("input"))
 </script>
 

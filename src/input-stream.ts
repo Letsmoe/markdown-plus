@@ -17,6 +17,11 @@ class InputStream {
 	eof() {
 		return this.peek() == "";
 	}
+	reset() {
+		this.pos = 0;
+		this.line = 0;
+		this.col = 0;
+	}
 	croak(msg: string) {
 		throw new Error(msg + " (" + this.line + ":" + this.col + ")");
 	}
