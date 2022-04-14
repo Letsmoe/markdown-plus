@@ -45,14 +45,14 @@ function evaluate(exp, env) {
 			return env.set(exp.left.value, evaluate(exp.right, env));
 
 		case "BinaryExpression":
-			return apply_op(
+			return applyOperation(
 				exp.operator,
 				evaluate(exp.left, env),
 				evaluate(exp.right, env)
 			);
 
 		case "FunctionDeclaration":
-			return make_lambda(env, exp);
+			return makeFunction(env, exp);
 
 		case "if":
 			var cond = evaluate(exp.cond, env);
@@ -75,12 +75,18 @@ function evaluate(exp, env) {
 				})
 			);
 
+		case "ArrayExpression":
+			// We allow deeply nested arrays, we must recurse to parse them
+			return exp.elements.map(function (e) {
+				return evaluate(e, env)
+			})
+
 		default:
 			throw new Error("I don't know how to evaluate " + exp.type);
 	}
 }
 
-function apply_op(op, a, b) {
+function applyOperation(op, a, b) {
 	function num(x) {
 		if (typeof x != "number")
 			throw new Error("Expected number but got " + x);
@@ -123,7 +129,7 @@ function apply_op(op, a, b) {
 	throw new Error("Can't apply operator " + op);
 }
 
-function make_lambda(env, exp) {
+function makeFunction(env, exp) {
 	function lambda() {
 		var names = exp.vars;
 		var scope = env.extend();

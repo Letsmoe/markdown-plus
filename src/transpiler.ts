@@ -1,6 +1,7 @@
 const FALSE = false;
 
 interface ASTToken {
+	elements: any;
 	type: string;
 	value: any;
 	left?: ASTToken;
@@ -23,6 +24,8 @@ function make_js(exp) {
 			case "string":
 			case "boolean":
 				return doAtom(exp);
+			case "ArrayExpression":
+				return doArray(exp);
 			case "identifier":
 				return doIdentifier(exp);
 			case "BinaryExpression":
@@ -44,6 +47,10 @@ function make_js(exp) {
 					"Transpilation failed for: " + JSON.stringify(exp)
 				);
 		}
+	}
+
+	function doArray(exp: ASTToken) {
+		return "[" + exp.elements.map(js).join(", ") + "]";
 	}
 
 	function doAtom(exp: ASTToken) {

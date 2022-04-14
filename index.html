@@ -68,14 +68,14 @@
 		});
 		makeTree(parsed)
 		var t0 = performance.now();
-		evaluate(parsed, globalEnv)
+		//evaluate(parsed, globalEnv)
 		var time = performance.now() - t0
-		write(`Execution Took: ${time}ms`)
+		//write(`Execution Took: ${time}ms`)
 		const jsCode = make_js(parsed);
 		t0 = performance.now()
-		new Function(jsCode)()
+		new Function(jsCode)();
 		time = performance.now() - t0
-		write(`Transpilation Took: ${time}ms`)
+		write(`Transpiled code took: ${time}ms`)
 	})
 	textarea.value = `
 # Function declaration with (func keyword)
@@ -84,7 +84,8 @@ fib = func (n) {
 };
 # Variable Declaration
 x = 5 ** 2;
-print(fib(22));`
+print(fib(22));
+print([1,2,3, [1,2,3]]);`
 	textarea.dispatchEvent(new Event("input"))
 </script>
 

@@ -17,43 +17,43 @@ function parse(input) {
 		"%": 20,
 		"**": 30,
 	};
-	return parse_toplevel();
+	return parseToplevel();
 	function is_punc(ch: string) {
 		var tok = input.peek();
 		return (
 			tok && tok.type == "punctuation" && (!ch || tok.value == ch) && tok
 		);
 	}
-	function is_kw(kw) {
+	function isKeyword(kw) {
 		var tok = input.peek();
 		return tok && tok.type == "keyword" && (!kw || tok.value == kw) && tok;
 	}
-	function is_op(op?) {
+	function isOperator(op?) {
 		var tok = input.peek();
 		return tok && tok.type == "operator" && (!op || tok.value == op) && tok;
 	}
-	function skip_punc(ch) {
+	function skipPunctuation(ch) {
 		if (is_punc(ch)) input.next();
 		else input.croak('Expecting punctuation: "' + ch + '"');
 	}
-	function skip_kw(kw) {
-		if (is_kw(kw)) input.next();
+	function skipKeyword(kw) {
+		if (isKeyword(kw)) input.next();
 		else input.croak('Expecting keyword: "' + kw + '"');
 	}
 	function skip_op(op) {
-		if (is_op(op)) input.next();
+		if (isOperator(op)) input.next();
 		else input.croak('Expecting operator: "' + op + '"');
 	}
 	function unexpected() {
 		input.croak("Unexpected token: " + JSON.stringify(input.peek()));
 	}
-	function maybe_binary(left, my_prec) {
-		var tok = is_op();
+	function maybeBinary(left, my_prec) {
+		var tok = isOperator();
 		if (tok) {
 			var his_prec = PRECEDENCE[tok.value];
 			if (his_prec > my_prec) {
 				input.next();
-				return maybe_binary(
+				return maybeBinary(
 					{
 						type:
 							tok.value == "="
@@ -61,7 +61,7 @@ function parse(input) {
 								: "BinaryExpression",
 						operator: tok.value,
 						left: left,
-						right: maybe_binary(parse_atom(), his_prec),
+						right: maybeBinary(parseAtom(), his_prec),
 					},
 					my_prec
 				);
@@ -72,75 +72,83 @@ function parse(input) {
 	function delimited(start, stop, separator, parser) {
 		var a = [],
 			first = true;
-		skip_punc(start);
+		skipPunctuation(start);
 		while (!input.eof()) {
 			if (is_punc(stop)) break;
 			if (first) first = false;
-			else skip_punc(separator);
+			else skipPunctuation(separator);
 			if (is_punc(stop)) break;
 			a.push(parser());
 		}
-		skip_punc(stop);
+		skipPunctuation(stop);
 		return a;
 	}
-	function parse_call(func) {
+	function parseCall(func) {
 		return {
 			type: "CallExpression",
 			callee: func,
-			args: delimited("(", ")", ",", parse_expression),
+			args: delimited("(", ")", ",", parseExpression),
 		};
 	}
-	function parse_varname() {
+	function parseIdentifier() {
 		var name = input.next();
 		if (name.type != "identifier") input.croak("Expecting variable name");
 		return name.value;
 	}
-	function parse_if() {
-		skip_kw("if");
-		var cond = parse_expression();
-		if (!is_punc("{")) skip_kw("then");
-		var then = parse_expression();
+	function parseIf() {
+		skipKeyword("if");
+		var cond = parseExpression();
+		if (!is_punc("{")) skipKeyword("then");
+		var then = parseExpression();
 		var ret: { type: string; cond: string; then: string; else?: string } = {
 			type: "if",
 			cond: cond,
 			then: then,
 		};
-		if (is_kw("else")) {
+		if (isKeyword("else")) {
 			input.next();
-			ret.else = parse_expression();
+			ret.else = parseExpression();
 		}
 		return ret;
 	}
 	function parseFunction() {
 		return {
 			type: "FunctionDeclaration",
-			vars: delimited("(", ")", ",", parse_varname),
-			body: parse_expression(),
+			vars: delimited("(", ")", ",", parseIdentifier),
+			body: parseExpression(),
 		};
 	}
-	function parse_bool() {
+	function parseBoolean() {
 		let val = input.next().value;
 		return {
 			type: "bool",
 			value: val == "true",
 		};
 	}
-	function maybe_call(expr) {
+	function maybeCall(expr) {
 		expr = expr();
-		return is_punc("(") ? parse_call(expr) : expr;
+		return is_punc("(") ? parseCall(expr) : expr;
 	}
-	function parse_atom() {
-		return maybe_call(function () {
+	function parseArray() {
+		return {
+			type: "ArrayExpression",
+			elements: delimited("[", "]", ",", parseAtom),
+		};
+	}
+
+	function parseAtom() {
+		return maybeCall(function () {
 			if (is_punc("(")) {
 				input.next();
-				var exp = parse_expression();
-				skip_punc(")");
+				var exp = parseExpression();
+				skipPunctuation(")");
 				return exp;
 			}
-			if (is_punc("{")) return parse_prog();
-			if (is_kw("if")) return parse_if();
-			if (is_kw("true") || is_kw("false")) return parse_bool();
-			if (is_kw("func") || is_kw("λ")) {
+			if (is_punc("{")) return parseProgram();
+			if (isKeyword("if")) return parseIf();
+			if (is_punc("[")) return parseArray();
+			if (isKeyword("true") || isKeyword("false")) return parseBoolean();
+			if (isKeyword("func") || isKeyword("λ")) {
 				input.next();
 				return parseFunction();
 			}
@@ -154,23 +162,23 @@ function parse(input) {
 			unexpected();
 		});
 	}
-	function parse_toplevel() {
+	function parseToplevel() {
 		var prog = [];
 		while (!input.eof()) {
-			prog.push(parse_expression());
-			if (!input.eof()) skip_punc(";");
+			prog.push(parseExpression());
+			if (!input.eof()) skipPunctuation(";");
 		}
 		return { type: "Program", body: prog };
 	}
-	function parse_prog() {
-		var prog = delimited("{", "}", ";", parse_expression);
+	function parseProgram() {
+		var prog = delimited("{", "}", ";", parseExpression);
 		if (prog.length == 0) return FALSE;
 		if (prog.length == 1) return prog[0];
 		return { type: "Program", body: prog };
 	}
-	function parse_expression() {
-		return maybe_call(function () {
-			return maybe_binary(parse_atom(), 0);
+	function parseExpression() {
+		return maybeCall(function () {
+			return maybeBinary(parseAtom(), 0);
 		});
 	}
 }

@@ -10,6 +10,9 @@ class TokenStream {
 		"func",
 		"then",
 		"for",
+		"import",
+		"export",
+		"from"
 	];
 	private current: string;
 	constructor(private stream: InputStream) {}
