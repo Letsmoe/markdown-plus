@@ -38,13 +38,13 @@
 		evaluate,
 		Environment
 	} from "./lib/interpreter.js";
-	import {make_js} from "./lib/transpiler.js";
+	import {
+		make_js
+	} from "./lib/transpiler.js";
 	const textarea = document.querySelector("textarea");
 	const tempConsole = document.querySelector(".temp-console");
 
-	const write = (txt) => tempConsole.appendChild(_("pre", {}, {
-		innerText: txt
-	}));
+	const write = (txt) => console.log(txt);
 	const globalEnv = new Environment()
 	globalEnv.def("print", write);
 
@@ -77,6 +77,65 @@
 		time = performance.now() - t0
 		write(`Transpiled code took: ${time}ms`)
 	})
+
+
+	var value = `
+# Heading 1
+## Heading 2
+
+This is some normal text
+
+{%
+	# This is embedded code (a comment to be precise)
+	print("Hello World!");
+
+	x = 5;
+%}
+
+---
+
+- This is a *list*
+- With multiple **items**
+
+<div>
+	{{x}}
+</div>
+
+This is no > blockquote
+
+> This is a blockquote
+
+![This is some image](https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png)
+
+[This is a link](https://continuum-ai.de)
+	`;
+	import {
+		Tokenizer
+	} from "./lib/md/tokenizer.js";
+	import {
+		Parser
+	} from "./lib/md/parser.js";
+
+	import {parseAndEvaluate} from "./lib/md/parse-evaluate.js";
+
+	let code = [];
+	value = value.replace(/\{%(.*?)%\}/gms, (all, first) => {
+		code.push(first)
+		return ""
+	})
+
+	parseAndEvaluate(code.join(""), globalEnv)
+	let variables = globalEnv.vars;
+
+	value = value.replace(/\{\{(.*?)\}\}/gm, (all, first) => {
+		return variables[first.trim()]
+	})
+
+	let stream = new Tokenizer(new InputStream(value))
+
+	new Parser(stream.tokens)
+
+
 	textarea.value = `
 # Function declaration with (func keyword)
 fib = func (n) {
@@ -85,8 +144,18 @@ fib = func (n) {
 # Variable Declaration
 x = 5 ** 2;
 print(fib(22));
-print([1,2,3, [1,2,3]]);`
+print([1,2,3, [1,2,3]]);
+# Allow PHP-Like accessing of properties.
+# someObject->someProperty = "Something";
+# print(someObject->someProperty);
+
+# And pointers of course!!!
+# x = 5
+# y = &x
+# y = 6 # => x = 6`
 	textarea.dispatchEvent(new Event("input"))
 </script>
 
 </html>
+
+<head></head>

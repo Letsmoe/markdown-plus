@@ -3,14 +3,12 @@
 
 This is some normal text
 
-{%
-	# This is embedded code (a comment to be precise)
-	x = 5;
-	newContent = include("./test2.mpp");
-%}
 
-{{newContent}}
-{{newContent}}
+
+
+# This is some constant value! 5
+
+# This is some constant value! 5
 
 ---
 
@@ -18,7 +16,7 @@ This is some normal text
 - With multiple **items**
 
 <div>
-	{{x}}
+	5
 </div>
 
 This is no > blockquote

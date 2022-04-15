@@ -1,11 +1,11 @@
 declare class InputStream {
     private input;
-    private pos;
-    private line;
-    private col;
+    pos: number;
+    line: number;
+    col: number;
     constructor(input: string);
     next(): string;
-    peek(): string;
+    peek(offset?: number): string;
     eof(): boolean;
     reset(): void;
     croak(msg: string): void;

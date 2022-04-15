@@ -1,7 +1,7 @@
 class InputStream {
-	private pos: number = 0;
-	private line: number = 1;
-	private col: number = 0;
+	public pos: number = 0;
+	public line: number = 1;
+	public col: number = 0;
 	constructor(private input: string) {}
 	next() {
 		var ch = this.input.charAt(this.pos++);
@@ -11,8 +11,8 @@ class InputStream {
 		} else this.col++;
 		return ch;
 	}
-	peek() {
-		return this.input.charAt(this.pos);
+	peek(offset : number = 0) {
+		return this.input.charAt(this.pos + offset);
 	}
 	eof() {
 		return this.peek() == "";
@@ -23,7 +23,7 @@ class InputStream {
 		this.col = 0;
 	}
 	croak(msg: string) {
-		throw new Error(msg + " (" + this.line + ":" + this.col + ")");
+		console.error(msg + " (" + this.line + ":" + this.col + ")");
 	}
 }
 

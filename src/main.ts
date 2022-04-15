@@ -1,27 +1,10 @@
-import {InputStream} from "./input-stream.js";
-import {TokenStream} from "./token-stream.js";
-import {parse} from "./parser.js";
+import * as showdown from "showdown";
+import * as fs from "fs";
 
-const code = `
-x = 4 + 5.5 ** 2;
+export {InputStream} from "./input-stream.js";
+export {TokenStream} from "./token-stream.js";
+export {parse} from "./parser.js";
 
-# for (let i = 0; i < 5; i++) {
-# 	printf("%d", i);
-# 
-# 	print(2 + 5.5);
-# }
-# 
-# let variableName = "Value";
-# function defaultFunction(arg1, arg2) {
-# 	print(arg1 * 2);
-# }`;
+const converter = new showdown.Converter();
 
-const stream = new InputStream(code);
-const tokens = new TokenStream(stream)
-
-const parsed = parse(tokens);
-console.log(parsed);
-
-
-
-//var lex = new Lexer(code);
+console.log(converter.makeHtml("# Hello, Markdown!"));

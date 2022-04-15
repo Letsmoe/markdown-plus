@@ -9,14 +9,17 @@ _start:
 	call _print
 
 	mov rax, 5
-	call Factorial
+	call _factorial
+
 
 	mov rax, 60
 	syscall
 
-Factorial:
-	push rax
-	ret
+_factorial:
+	
+
+
+
 
 
 _print:
