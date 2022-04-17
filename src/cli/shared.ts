@@ -43,7 +43,8 @@ const shared : {config: Config, ROOT: string, errors: number, warnings: number, 
 		css: "",
 		compilerOptions: {
 			outputHTML: true,
-		}
+		},
+		headerFile: ""
 	}
 }
 

@@ -65,18 +65,24 @@ function getInputFiles() {
 		for (const file of list) {
 			const filePath = path.join(dir, file);
 			const relPath = path.join(parent, file);
-			if (testInclude(relPath) && relPath.endsWith(".mpp")) {
-				const stat = fs.statSync(filePath);
-				if (stat.isDirectory()) {
-					recurse(filePath, relPath);
-				} else {
-					files.push(relPath);
-				}
+			
+			const stat = fs.statSync(filePath);
+			if (stat.isDirectory()) {
+				recurse(filePath, relPath);
+			} else if (testInclude(relPath) && relPath.endsWith("mpp")) {
+				files.push(relPath);
 			}
 		}
 	};
 	recurse(shared.ROOT, "");
 	return files;
+}
+
+function loadHeaderFile() {
+	if (shared.config.headerFile) {
+		return fs.readFileSync(path.join(shared.ROOT, shared.config.headerFile), "utf8");
+	}
+	return "";
 }
 
 
@@ -86,7 +92,7 @@ function run() {
 	let time = `[${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
 		date.getSeconds()
 	)}]`;
-	let cStart = performance.now();
+	let cStart = date.getSeconds();
 	console.clear();
 	process.stdout.write(
 		`${time} File change detected. Starting compilation...\n`
@@ -107,7 +113,7 @@ function run() {
 			content = shared.converter.makeHtml(content);
 			content = content.replace(
 				/<head>(.*?)<\/head>/gms,
-				`<head><link rel="stylesheet" href="${shared.config.css}">$1</head>`
+				`<head><link rel="stylesheet" href="${shared.config.css}">$1</head>${loadHeaderFile()}`
 			);
 		}
 		let newPath = path.join(shared.ROOT, shared.config.outDir, changeExtension(file, "html"));
@@ -121,7 +127,7 @@ function run() {
 	}
 
 	let timeTaken = color(
-		`${Math.round((performance.now() - cStart) * 10) / 10}ms`,
+		`${Math.round(date.getSeconds() - cStart)}s`,
 		COLORS.YELLOW
 	);
 	process.stdout.write(

@@ -10,7 +10,8 @@ interface Config {
 	watch?: boolean,
 	compilerOptions?: {
 		outputHTML: boolean,
-	}
+	},
+	headerFile?: string
 }
 
 // Create a function that deeply merges two objects
