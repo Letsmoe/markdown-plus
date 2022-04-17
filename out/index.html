@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head><link rel="stylesheet" href="/out/style/github-markdown.css">
-<title>An introduction to MarkdownPlusPlus</title>
+<title>An introduction to Gyro</title>
 <meta charset="utf-8">
 <meta name="author" content="letsmoe">
 <meta name="date" content="April 16, 2022">
@@ -9,65 +9,18 @@
 	<img src="/out/assets/gyro-logo.svg" alt="Gyro Logo" width="50px">
 </div>
 <body>
-<h1 id="markdownplusplus">MarkdownPlusPlus</h1>
-<p>MarkdownPlusPlus (or <code>mpp</code> / <code>m++</code> for short) is a Markdown syntax extension that adds both the functionality of an extended 
-markdown syntax for handling more complex markup and the ability to execute <code>mpp</code> code directly inside an <code>mpp</code> 
-file to allow for a complex moduling system to span documentation across multiple files and folders that will get concatenated later on in a single file. </p>
-<p>mpp is a compiled / interpreted language that can execute arbitrary code inside a markdown file allowing for heavy calculations inside an otherwise lightweight language.</p>
-<h1 id="arguments">Arguments</h1>
-<p>Following cli arguments can be used to configure the mpp compiler.</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:right;">Name</th>
-<th style="text-align:center;">Alias</th>
-<th style="text-align:left;">Description</th>
-<th style="text-align:left;">Type</th>
-<th style="text-align:left;">Required</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:right;">--entry</td>
-<td style="text-align:center;">-e</td>
-<td style="text-align:left;">The file to read from. Acting as the entry for the script.</td>
-<td style="text-align:left;">[STRING]</td>
-<td style="text-align:left;">[TRUE]</td>
-</tr>
-<tr>
-<td style="text-align:right;">--output</td>
-<td style="text-align:center;">-o</td>
-<td style="text-align:left;">The file to write to. If not specified, the output will be written to stdout.</td>
-<td style="text-align:left;">[STRING]</td>
-<td style="text-align:left;">[FALSE]</td>
-</tr>
-<tr>
-<td style="text-align:right;">--html</td>
-<td style="text-align:center;">-h</td>
-<td style="text-align:left;">Whether or not to output HTML.</td>
-<td style="text-align:left;">[BOOLEAN]</td>
-<td style="text-align:left;">[FALSE]</td>
-</tr>
-<tr>
-<td style="text-align:right;">--watch</td>
-<td style="text-align:center;">-w</td>
-<td style="text-align:left;">Whether or not to watch the entry file for changes.</td>
-<td style="text-align:left;">[BOOLEAN]</td>
-<td style="text-align:left;">[FALSE]</td>
-</tr>
-</tbody>
-</table>
 <h1 id="gyro">Gyro</h1>
 <p><center>
-<img src="../../assets/gyro-full-subscript.svg" alt="Gyroscope with 'GYRO' subscript" />
+<img src="./assets/gyro-full-subscript.svg" alt="Gyroscope with 'GYRO' subscript" />
 </center>
 <center>
 <code>Gyro</code> is a high-level, statically typed, compiled programming lanaguage written in pure C (and JavaScript) with the goal of creating an extensible and simplistic environment for use in embedded web applications.
 </center></p>
-<p><details><summary>Table of Contents</summary><ol><li><a href="#principles">Principles</a></li><li><a href="#grammar">Grammar</a></li><li><a href="#features">Features</a></li><li><a href="#reference">Reference</a></li><ul><li><a href="#standard_objects">Standard Objects</a></li></ol></details></p>
+<p><details><summary>Table of Contents</summary><ol><li><a href="#principles">Principles</a></li><li><a href="#grammar">Grammar</a></li><li><a href="#features">Features</a></li><li><a href="#reference">Reference</a></li><ul><li><a href="#standard_objects">Standard Objects</a></li><li><a href="#built_in_libraries">Built-in Libraries</a></li></ol></details></p>
 <h2 id="principles">Principles</h2>
-<p><code>Gyro</code> has been developed with the idea of a fast and simple language in mind. It shares a lot of it's syntax with Typescript and old school C.
-Take a look at this snippet.</p>
+<p><code>Gyro</code> has been developed with the idea of a fast and simple language in mind.
+It shares a lot of it's syntax with Typescript and old school C. Take a look at
+this snippet.</p>
 <pre><code class="gyro language-gyro">float: variable = 5.5;
 // We can define comments using double slashes.
 int: main = func(...args) {
@@ -78,8 +31,11 @@ int: main = func(...args) {
     return round;
 }
 </code></pre>
-<p>Since <code>Gyro</code> is statically typed, annotations have to be added to help the compiler figure out the optimal solution for optimizing the given code.
-<code>Gyro</code> can also be interpreted dynamically, removing the need for type annotations, they are - however - a best practice for making code more readable and can help with IDE highlighting.</p>
+<p>Since <code>Gyro</code> is statically typed, annotations have to be added to help the
+compiler figure out the optimal solution for optimizing the given code. <code>Gyro</code>
+can also be interpreted dynamically, removing the need for type annotations,
+they are - however - a best practice for making code more readable and can help
+with IDE highlighting.</p>
 <h2 id="grammar">Grammar</h2>
 <p>The full official grammar of <code>Gyro</code> is <a href="https://continuum-ai.de/docs/gyro/grammar/">described here</a>.
 Here are some important parts of it:</p>
@@ -104,17 +60,37 @@ operator = "+" | "-" | "*" | "/" | "=" | "==" | "!=" | "&lt;" | "&lt;=" | "&gt;"
 keyword = ("if" | "else" | "while" | "return" | "break" | "continue" | "for" | "in" | "true" | "false" | "null")
 </code></pre>
 <h2 id="features">Features</h2>
-<p>There are plenty of programming languages out there that offer flexibility and immense possibilities for any imaginable situation, why would <code>Gyro</code> stand out?
-<code>Gyro</code> is syntax extensible, meaning you can define your own keywords, operators, and functions. <code>Gyro</code> also offers better string manipulation since it has been written with writers in mind.
-There is a high performance markdown and HTML parser that has been implemented in <code>Gyro</code> making it very easy working with web applications.
-Remember the <code>Table of Contents</code> from above? It has been automatically generated while compiling. The code for that looks like this:</p>
+<p>There are plenty of programming languages out there that offer flexibility and
+immense possibilities for any imaginable situation, why would <code>Gyro</code> stand out?
+<code>Gyro</code> is syntax extensible, meaning you can define your own keywords,
+operators, and functions. <code>Gyro</code> also offers better string manipulation since it
+has been written with writers in mind. There is a high performance markdown and
+HTML parser that has been implemented in <code>Gyro</code> making it very easy working with
+web applications. Remember the <code>Table of Contents</code> from above? It has been
+automatically generated while compiling. The code for that looks like this:</p>
 <pre><code class="gyro language-gyro">table_of_contents = toc("Table of Contents");
 // Notice the `tilde` (~) sign being used as the write operation here.
 ~table_of_contents;
 </code></pre>
 <h2 id="reference">Reference</h2>
-<p>Take a look at the full <a href="https://continuum-ai.de/docs/gyro/reference/">Gyro Reference</a>.</p>
+<p>For more information take a look at the full <a href="https://continuum-ai.de/docs/gyro/reference/">Gyro Reference</a>.</p>
 <h3 id="standard-objects">Standard Objects</h3>
-<p>Built-in objects that are supported by the standard library are: <a href="./types/array"><code>Array</code></a>, <a href="./types/boolean.html"><code>Boolean</code></a>, <a href="./types/date"><code>Date</code></a>, <a href="./types/error"><code>Error</code></a>, <a href="./types/function"><code>Function</code></a>, <a href="./types/number"><code>Number</code></a>, <a href="./types/object"><code>Object</code></a>, <a href="./types/regexp"><code>RegExp</code></a>, <a href="./types/string"><code>String</code></a>, <a href="./types/symbol"><code>Symbol</code></a>, <a href="./types/typeerror"><code>TypeError</code></a>, <a href="./types/undefined"><code>Undefined</code></a>, <a href="./types/null"><code>Null</code></a>, <a href="./types/int8array"><code>Int8Array</code></a>, <a href="./types/uint8array"><code>Uint8Array</code></a>, <a href="./types/uint8clampedarray"><code>Uint8ClampedArray</code></a>, <a href="./types/int16array"><code>Int16Array</code></a>, <a href="./types/uint16array"><code>Uint16Array</code></a>, <a href="./types/int32array"><code>Int32Array</code></a>, <a href="./types/uint32array"><code>Uint32Array</code></a>, <a href="./types/float32array"><code>Float32Array</code></a>, <a href="./types/float64array"><code>Float64Array</code></a>, <a href="./types/map"><code>Map</code></a>, <a href="./types/set"><code>Set</code></a>, <a href="./types/weakmap"><code>WeakMap</code></a>, <a href="./types/weakset"><code>WeakSet</code></a>, <a href="./types/promise"><code>Promise</code></a>.</p>
+<p>Built-in objects that are supported by the standard library are:
+<a href="./types/array"><code>Array</code></a>, <a href="./types/boolean.html"><code>Boolean</code></a>,
+<a href="./types/date"><code>Date</code></a>, <a href="./types/error"><code>Error</code></a>,
+<a href="./types/function"><code>Function</code></a>, <a href="./types/number"><code>Number</code></a>,
+<a href="./types/object"><code>Object</code></a>, <a href="./types/regexp"><code>RegExp</code></a>,
+<a href="./types/string"><code>String</code></a>, <a href="./types/symbol"><code>Symbol</code></a>,
+<a href="./types/typeerror"><code>TypeError</code></a>, <a href="./types/undefined"><code>Undefined</code></a>,
+<a href="./types/null"><code>Null</code></a>, <a href="./types/int8array"><code>Int8Array</code></a>,
+<a href="./types/uint8array"><code>Uint8Array</code></a>,
+<a href="./types/uint8clampedarray"><code>Uint8ClampedArray</code></a>,
+<a href="./types/int16array"><code>Int16Array</code></a>, <a href="./types/uint16array"><code>Uint16Array</code></a>,
+<a href="./types/int32array"><code>Int32Array</code></a>, <a href="./types/uint32array"><code>Uint32Array</code></a>,
+<a href="./types/float32array"><code>Float32Array</code></a>, <a href="./types/float64array"><code>Float64Array</code></a>,
+<a href="./types/map"><code>Map</code></a>, <a href="./types/set"><code>Set</code></a>, <a href="./types/weakmap"><code>WeakMap</code></a>,
+<a href="./types/weakset"><code>WeakSet</code></a>, <a href="./types/promise"><code>Promise</code></a>.</p>
+<h3 id="built-in-libraries">Built-in Libraries</h3>
+<p><a href="./libraries/math.html"><code>Math</code></a></p>
 </body>
 </html>

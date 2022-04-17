@@ -11,7 +11,11 @@ interface Config {
 	compilerOptions?: {
 		outputHTML: boolean,
 	},
-	headerFile?: string
+	headerFile?: string,
+	resultModifier: {
+		before: (content: string) => string,
+		after: (content: string) => string
+	}
 }
 
 // Create a function that deeply merges two objects

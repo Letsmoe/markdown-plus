@@ -1,8 +1,11 @@
 import * as showdown from "showdown";
 import { Environment } from "../interpreter.js";
 import { Config } from "./config.js";
-import { Dependency } from "./dependency-resolver.js";
 import { env } from "./interpreter-environment.js";
+//@ts-ignore
+import * as mathjax from "mathjax";
+
+
 
 // Create a function that loops through the include conditions in shared.config and test whether the given regex matches the file name
 const testInclude = (file: string) => {
@@ -15,12 +18,33 @@ const testInclude = (file: string) => {
 	return false;
 }
 
-const shared : {config: Config, ROOT: string, errors: number, warnings: number, converter: showdown.Converter, dependencies: Dependency[], env: typeof Environment} = {
+mathjax.init({
+	loader: {load: ["input/tex", "output/svg"]}
+}).then((mj : any) => {
+	shared.mj = mj;
+}).catch(() => console.log("Could not load MathJax..."))
+
+const mathExtension = () => {
+	return [{
+		type: "lang",
+		regex: /^¨D¨D(.*?)¨D¨D$/gms,
+		replace: (match: string, content: string) => {
+			const svg = shared.mj.tex2svg(content, {display: true});
+			return shared.mj.startup.adaptor.outerHTML(svg);
+		}
+	}]
+}
+// @ts-ignore
+showdown.default.extension("math", mathExtension);
+
+const shared : {config: Config, ROOT: string, errors: number, warnings: number, converter: showdown.Converter, env: typeof Environment, mj: any} = {
+	mj: undefined,
 	ROOT: "",
 	errors: 0,
 	warnings: 0,
 	// @ts-ignore
 	converter: new showdown.default.Converter({
+		extensions: ["math"],
 		customizedHeaderId: true,
 		ghCompatibleHeaderId: true,
 		simplifiedAutoLink: true,
@@ -32,7 +56,6 @@ const shared : {config: Config, ROOT: string, errors: number, warnings: number, 
 		metadata: true,
 		moreStyling: true,
 	}),
-	dependencies: [],
 	env: env,
 	config: {
 		outDir: "",
@@ -44,7 +67,11 @@ const shared : {config: Config, ROOT: string, errors: number, warnings: number, 
 		compilerOptions: {
 			outputHTML: true,
 		},
-		headerFile: ""
+		headerFile: "",
+		resultModifier: {
+			before: (x) => x,
+			after: (x) => x
+		}
 	}
 }
 

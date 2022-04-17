@@ -5,7 +5,7 @@ import { shared, testInclude } from "./shared.js";
 import { readParseFile } from "./parse-file.js";
 import { FileWatcher } from "./file-watcher.js";
 import { issueWarning } from "./console-dispatcher.js";
-import { checkConfig } from "./config.js";
+import { checkConfig, Config } from "./config.js";
 
 const args = cArgs(process.argv.slice(2))
 	.options({
@@ -36,25 +36,37 @@ const changeExtension = (file: string, ext: string) => {
 	return file.substring(0, file.lastIndexOf(".")) + "." + ext;
 }
 
-const configPath = args.project;
-let rawConfigData = fs.readFileSync(configPath, "utf8");
-if (rawConfigData !== "") {
-	const config = JSON.parse(rawConfigData);
+function useProject(config : Config) {
 	console.log(`Using project ${args.project}`);
 
 	// Check if the given config follows the required schema. May lead to early exit.
 	shared.config = checkConfig(config);
 	// All paths in the config file are relative to the location of the file so we will just use it's parent directory and redirect from there.
-	shared.ROOT = path.join(process.cwd(), path.dirname(configPath), config.rootDir) || path.dirname(configPath);
+	shared.ROOT = path.join(process.cwd(), path.dirname(args.project), config.rootDir) || path.dirname(args.project);
 	process.chdir(shared.ROOT);
 	if (config.watch == true || args.watch == true) {
 		// Determine whether a FileWatcher should be assigned to the projects root folder.
 		new FileWatcher(shared.ROOT, run)
 	}
 	run();
-	
-} else {
-	issueWarning("Project file is empty at: " + configPath);
+}
+
+const configPath = path.join(process.cwd(), args.project);
+
+if (configPath.endsWith("json")) {
+	let rawConfigData = fs.readFileSync(configPath, "utf8");
+	if (rawConfigData !== "") {
+		const config = JSON.parse(rawConfigData);
+		useProject(config);
+		
+	} else {
+		issueWarning("Project file is empty at: " + configPath);
+	}
+} else if (configPath.endsWith("js")) {
+	import(configPath).then(async (config: any) => {
+		const configData = config.default;
+		useProject(configData);
+	})
 }
 
 function getInputFiles() {
@@ -92,7 +104,7 @@ function run() {
 	let time = `[${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
 		date.getSeconds()
 	)}]`;
-	let cStart = date.getSeconds();
+	let cStart = Date.now();
 	console.clear();
 	process.stdout.write(
 		`${time} File change detected. Starting compilation...\n`
@@ -108,6 +120,7 @@ function run() {
 		}
 
 		let content = readParseFile(file, shared.env);
+		content = shared.config.resultModifier.before(content);
 		// Now we will generate the HTML if requested.
 		if (shared.config.compilerOptions.outputHTML) {
 			content = shared.converter.makeHtml(content);
@@ -115,6 +128,7 @@ function run() {
 				/<head>(.*?)<\/head>/gms,
 				`<head><link rel="stylesheet" href="${shared.config.css}">$1</head>${loadHeaderFile()}`
 			);
+			content = shared.config.resultModifier.after(content);
 		}
 		let newPath = path.join(shared.ROOT, shared.config.outDir, changeExtension(file, "html"));
 		fs.mkdir(path.dirname(newPath), {recursive: true}, (err: Error) => {
@@ -127,7 +141,7 @@ function run() {
 	}
 
 	let timeTaken = color(
-		`${Math.round(date.getSeconds() - cStart)}s`,
+		`${Math.round(Date.now() - cStart)}ms`,
 		COLORS.YELLOW
 	);
 	process.stdout.write(

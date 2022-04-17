@@ -20,11 +20,13 @@
   "author": "letsmoe",
   "license": "MIT",
   "devDependencies": {
+    "@types/mathjax": "^0.0.37",
     "@types/node": "^17.0.23",
     "@types/showdown": "^2.0.0"
   },
   "dependencies": {
     "chokidar": "^3.5.3",
+    "mathjax": "^3.2.0",
     "showdown": "^2.0.3"
   }
 }
