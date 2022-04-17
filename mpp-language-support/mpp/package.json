@@ -1,0 +1,44 @@
+{
+    "name": "mpp",
+    "displayName": "mpp",
+    "description": "Syntax extension for markdown implementing Gyro into native markdown syntax.",
+    "version": "0.2.1",
+    "publisher": "letsmoe",
+    "engines": {
+        "vscode": "^1.66.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "extensionDependencies": [
+        "letsmoe.gyro",
+        "vscode.markdown"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "mpp",
+                "aliases": [
+                    "Markdown++"
+                ],
+                "extensions": [
+                    ".mpp"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "mpp",
+                "scopeName": "source.mpp",
+                "path": "./syntaxes/mpp.tmLanguage.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "mpp",
+                "path": "./snippets/mpp.json"
+            }
+        ]
+    }
+}

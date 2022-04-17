@@ -1,0 +1,10 @@
+# Arguments
+Following cli arguments can be used to configure the mpp compiler.
+
+
+| Name | Alias | Description |   Type   | Required |
+|----:|:-----:|:-----------|:--------| :--- |
+|  --entry  |  -e   |     The file to read from. Acting as the entry for the script.      | [STRING] | [TRUE] |
+|  --output  |  -o   |     The file to write to. If not specified, the output will be written to stdout.      | [STRING] | [FALSE] |
+|  --html  |  -h   |     Whether or not to output HTML.      | [BOOLEAN] | [FALSE] |
+| --watch | -w | Whether or not to watch the entry file for changes. | [BOOLEAN] | [FALSE] |

@@ -1,0 +1,17 @@
+{
+	"Table of Contents": {
+		"prefix": ["table", "toc"],
+		"description": "A table of contents for the current page or chapter.",
+		"body": ["{%", "${1:toc} = toc(\"${0:Content}\")", "%}", "{{${1:toc}}}"]
+	},
+	"Gyro Embedding": {
+		"prefix": ["gy", "gyro"],
+		"description": "Embed Gyro code.",
+		"body": ["{%", "$0", "%}"]
+	},
+	"Variable Embedding": {
+		"prefix": ["var"],
+		"description": "Embed a variable.",
+		"body": ["{{", "${0:name}", "}}"]
+	}
+}

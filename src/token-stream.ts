@@ -28,7 +28,7 @@ class TokenStream {
 	}
 	private is_id(ch: string): boolean {
 		return (
-			this.isIdentifierStart(ch) || "?!-<>=0123456789".indexOf(ch) >= 0
+			this.isIdentifierStart(ch) || "?!-<>0123456789".indexOf(ch) >= 0
 		);
 	}
 	private is_op_char(ch) {

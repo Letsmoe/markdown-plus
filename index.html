@@ -86,7 +86,7 @@
 This is some normal text
 
 {%
-	# This is embedded code (a comment to be precise)
+	// This is embedded code (a comment to be precise)
 	print("Hello World!");
 
 	x = 5;
@@ -137,22 +137,22 @@ This is no > blockquote
 
 
 	textarea.value = `
-# Function declaration with (func keyword)
+// Function declaration with (func keyword)
 fib = func (n) {
 	if n < 2 then n else fib(n - 1) + fib(n - 2);
 };
-# Variable Declaration
+// Variable Declaration
 x = 5 ** 2;
 print(fib(22));
 print([1,2,3, [1,2,3]]);
-# Allow PHP-Like accessing of properties.
-# someObject->someProperty = "Something";
-# print(someObject->someProperty);
+// Allow PHP-Like accessing of properties.
+// someObject->someProperty = "Something";
+// print(someObject->someProperty);
 
-# And pointers of course!!!
-# x = 5
-# y = &x
-# y = 6 # => x = 6`
+// And pointers of course!!!
+// x = 5
+// y = &x
+// y = 6 # => x = 6`
 	textarea.dispatchEvent(new Event("input"))
 </script>
 

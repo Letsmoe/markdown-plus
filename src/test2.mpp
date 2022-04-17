@@ -1,4 +1,0 @@
-{%
-	someConstant = "This is some constant value!"
-%}
-# {{someConstant}} {{x}}

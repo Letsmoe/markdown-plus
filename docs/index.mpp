@@ -1,0 +1,21 @@
+---
+author: letsmoe
+title: An introduction to MarkdownPlusPlus
+date: April 16, 2022
+---
+
+# MarkdownPlusPlus
+MarkdownPlusPlus (or `mpp` / `m++` for short) is a Markdown syntax extension that adds both the functionality of an extended 
+markdown syntax for handling more complex markup and the ability to execute `mpp` code directly inside an `mpp` 
+file to allow for a complex moduling system to span documentation across multiple files and folders that will get concatenated later on in a single file. 
+
+mpp is a compiled / interpreted language that can execute arbitrary code inside a markdown file allowing for heavy calculations inside an otherwise lightweight language.
+
+{%
+	setDefaultCSS("/out/style/github-markdown.css");
+	argumentsPage = include("./arguments.mppm");
+	gyroPage = include("./gyro.mpp");
+%}
+
+{{argumentsPage}}
+{{gyroPage}}

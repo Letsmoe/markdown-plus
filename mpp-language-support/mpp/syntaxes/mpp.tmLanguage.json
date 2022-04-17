@@ -1,0 +1,44 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "MarkdownPlusPlus",
+	"patterns": [{
+			"begin": "{%",
+			"end": "%}",
+			"patterns": [
+				{
+					"include": "source.gyro"
+				}
+			],
+			"beginCaptures": {
+				"0": {
+					"name": "keyword.other.gyro"
+				}
+			},
+			"endCaptures": {
+				"0": {
+					"name": "keyword.other.gyro"
+				}
+			}
+		},
+		{
+			"match": "({{)(.*?)(}})",
+			"captures": {
+				"1": {
+					"name": "punctuation.definition.gyro"
+				},
+				"2": {
+					"name": "variable.other.gyro"
+				},
+				"3": {
+					"name": "punctuation.definition.gyro"
+				}
+			}
+		},
+		{
+			"include": "text.html.markdown"
+		}
+	],
+	"repository": {
+	},
+	"scopeName": "source.mpp"
+}
