@@ -12,6 +12,11 @@ env.def("include", (filename) => {
     const content = readParseFile(filename, env);
     return content;
 });
+env.def("center", (...args) => {
+    const content = `<p align="center">${args.join("<br>")}</p>`;
+    env.vars.__writeBuffer += content;
+    return content;
+});
 env.def("__headings", []);
 env.def("toc", (title) => {
     let list = "<ol>";

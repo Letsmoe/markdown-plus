@@ -17,6 +17,12 @@ env.def("include", (filename: string) => {
 	return content;
 });
 
+env.def("center", (...args: any[]) => {
+	const content = `<p align="center">${args.join("<br>")}</p>`;
+	env.vars.__writeBuffer += content;
+	return content;
+})
+
 env.def("__headings", []);
 
 env.def("toc", (title: string) => {
