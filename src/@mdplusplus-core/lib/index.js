@@ -1,4 +1,16 @@
 #!/usr/bin/env node
+/**
+ * We want to add some extra flavour to markdown files.
+ *
+ * Meaning when we edit we don't always want to resolve files, we can construct
+ * a list of all files that we have to resolve a specific name from.
+ *
+ * Imagine this input: !`false` There might be a file somewhere called
+ * "false.mpp" inside the "datatypes" directory.
+ *
+ * We search the source directory to construct this list on each compilation run
+ * and replace this kind of syntax with proper markdown links.
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,8 +20,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { colarg, COLORS, color } from "colarg";
+import { colarg } from "colarg";
 import * as fs from "fs";
+import * as stringSimilarity from "string-similarity";
 import * as path from "path";
 import { shared, testInclude } from "./shared.js";
 import { readParseFile } from "./parse-file.js";
@@ -18,39 +31,43 @@ import { issueWarning } from "./console-dispatcher.js";
 import { checkConfig } from "./config.js";
 import * as mime from "mime-types";
 import { getDependencies } from "./dependencies.js";
-const args = colarg(process.argv.slice(2))
-    .options({
-    watch: {
-        alias: "w",
-        type: "boolean",
-        desc: "Whether or not to watch the entry file for changes.",
-        default: false,
-        required: false,
-    },
-    project: {
-        alias: "p",
-        type: "string",
-        desc: "The project to use for the compilation.",
-        default: "",
-        required: false,
-    },
-    markdown: {
-        alias: "md",
-        type: "boolean",
-        desc: "Whether or not to output markdown instead of HTML.",
-        default: false,
-        required: false,
-    },
-    output: {
-        alias: "o",
-        type: "string",
-        desc: "The file to output to.",
-        default: "",
-        required: false,
-    }
-})
-    .usage("Usage: npx mppc [-p <project>] [-w <true|false>]")
-    .help().args;
+import Graph from "digraphe";
+const parser = new colarg(process.argv.slice(2));
+parser.addOption({
+    name: "watch",
+    alias: "w",
+    description: "Watch the project for changes and automatically reload.",
+    type: "boolean",
+    defaults: false,
+    required: false,
+});
+parser.addOption({
+    name: "project",
+    alias: "p",
+    description: "A project file to use instead of using default settings.",
+    type: "string",
+    defaults: "",
+    required: false,
+});
+parser.addOption({
+    name: "markdown",
+    alias: "m",
+    description: "Whether or not to output markdown instead of HTML.",
+    type: "boolean",
+    defaults: false,
+    required: false,
+});
+parser.addOption({
+    name: "output",
+    alias: "o",
+    description: "The output file to write to.",
+    type: "string",
+    defaults: "",
+    required: false,
+});
+parser.defineUsage("Usage: npx mppc [-p <project>] [-w <true|false>]");
+parser.enableHelp();
+const args = parser.getArgs();
 const pad = (str) => {
     return str.toString().padStart(2, "0");
 };
@@ -73,7 +90,8 @@ function makeHTML(txt, file) {
             if (link.startsWith("http") ||
                 link.startsWith("//") ||
                 link.startsWith("mailto") ||
-                link.startsWith("#")) {
+                link.startsWith("#") ||
+                link.startsWith("/")) {
                 return all;
             }
             let dirname = path.dirname(path.join(shared.ROOT, path.dirname(file), link));
@@ -185,12 +203,121 @@ function loadHeaderFile() {
     }
     return "";
 }
+/**
+ * A function to resolve any link following this syntax: "!`<name>`" by trying to find a file that might correspond to this name.
+ * @date 6/14/2022 - 6:53:17 PM
+ */
+function resolveLinks(content, file) {
+    // Get a list of all files inside the source directory.
+    const files = getInputFiles();
+    return content.replace(/!`(.*?)`/g, (all, name) => {
+        // Append all file's names to the list of files.
+        let bestMatch = 0, bestMatchPath;
+        let fileNameList = files.map(x => [x, path.basename(x)]).concat(files.map(x => [x, x]));
+        // Loop through all files trying to find the best matching substring
+        for (const str of fileNameList) {
+            let similarity = stringSimilarity.compareTwoStrings(str[1], name);
+            if (similarity > bestMatch) {
+                bestMatchPath = str[0];
+                bestMatch = similarity;
+            }
+        }
+        if (bestMatch > 0.5) {
+            // Get the target file's basename as a title of the link
+            let title = path.parse(path.basename(bestMatchPath)).name;
+            // Get the relative path to the target file
+            let relativePath = "/" + path.relative(shared.ROOT, bestMatchPath);
+            // Change the file extension
+            relativePath = changeExtension(relativePath, shared.config.compilerOptions.outputHTML ? "html" : "md");
+            return `[${title}](${relativePath})`;
+        }
+        issueWarning("Could not find target for: '" + name + "' in (" + file + "), maybe you should be a little more concrete.");
+        return all.substring(1);
+    });
+}
+var MarkdownType;
+(function (MarkdownType) {
+    MarkdownType[MarkdownType["Image"] = 0] = "Image";
+    MarkdownType[MarkdownType["Link"] = 1] = "Link";
+    MarkdownType[MarkdownType["AutoResolveLink"] = 2] = "AutoResolveLink";
+})(MarkdownType || (MarkdownType = {}));
+function matchMarkdownLinks(content) {
+    let firstHand = Array.from(content.matchAll(/\[(.*?)\]\((.*?)\)/g)).map(x => {
+        return {
+            start: x.index,
+            end: x.index + x[0].length,
+            name: x[1],
+            link: x[2],
+            type: MarkdownType.Link
+        };
+    });
+    let images = Array.from(content.matchAll(/!\[(.*?)\]\((.*?)\)/g)).map(x => {
+        return {
+            start: x.index,
+            end: x.index + x[0].length,
+            name: x[1],
+            link: x[2],
+            type: MarkdownType.Image
+        };
+    });
+    let autoResolve = Array.from(content.matchAll(/!`(.*?)`/g)).map(x => {
+        return {
+            start: x.index,
+            end: x.index + x[0].length,
+            name: x[1],
+            link: tryResolveLink(x[1]),
+            type: MarkdownType.AutoResolveLink
+        };
+    });
+    return autoResolve.concat(images).concat(firstHand);
+}
+function tryResolveLink(name) {
+    const files = getInputFiles();
+    // Append all file's names to the list of files.
+    let score = 0, bestMatchPath;
+    let fileNameList = files.map(x => [x, path.basename(x)]).concat(files.map(x => [x, x]));
+    // Loop through all files trying to find the best matching substring
+    for (const str of fileNameList) {
+        let similarity = stringSimilarity.compareTwoStrings(str[1], name);
+        if (similarity > score) {
+            bestMatchPath = str[0];
+            score = similarity;
+        }
+    }
+    if (score > 0.5) {
+        return bestMatchPath;
+    }
+    return null;
+}
+function createDependencyGraph() {
+    let graph = new Graph();
+    let files = getInputFiles();
+    for (const file of files) {
+        graph.addNode(file);
+        let content = readParseFile(file, shared.env);
+        const links = matchMarkdownLinks(content);
+        // We will have to check if there are any links that are duplicates of others since they can look different but resolve to the same file.
+        // Loop through all links and only push to a new array if they don't exist yet.
+        for (const link of links) {
+            if (link.type === MarkdownType.AutoResolveLink) {
+                if (link.link) {
+                    graph.addEdge(file, link.link);
+                }
+            }
+            else {
+                graph.addEdge(file, link.link);
+            }
+        }
+    }
+    console.log(graph.routes({ from: "index.mpp" }).map(x => x.path));
+}
 function run() {
     shared.errors = 0;
     let date = new Date();
     let time = `[${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}]`;
     let cStart = Date.now();
     console.clear();
+    createDependencyGraph();
     process.stdout.write(`${time} File change detected. Starting compilation...\n`);
     const files = getInputFiles();
     // Loop through all existing files
@@ -220,12 +347,14 @@ function run() {
             md: readParseFile(file, shared.env),
             html: "",
         };
+        // Apply our custom link resolving technique
+        content.md = resolveLinks(content.md, file);
         content.md = shared.config.resultModifier.before(content.md);
         // Now we will generate the HTML if requested.
         if (shared.config.compilerOptions.outputHTML) {
             content.html = makeHTML(content.md, file);
         }
-        let newPath = path.join(shared.ROOT, shared.config.outDir, changeExtension(file, "html"));
+        let newPath = path.join(shared.ROOT, shared.config.outDir, changeExtension(file, shared.config.compilerOptions.outputHTML ? "html" : "md"));
         fs.mkdir(path.dirname(newPath), { recursive: true }, (err) => {
             if (err)
                 throw err;
@@ -234,6 +363,6 @@ function run() {
                 : content.md);
         });
     }
-    let timeTaken = color(`${Math.round(Date.now() - cStart)}ms`, COLORS.YELLOW);
+    let timeTaken = `${Math.round(Date.now() - cStart)}ms`;
     process.stdout.write(`${time} Found ${shared.errors} errors. Took: ${timeTaken}. Watching for file changes...\n`);
 }

@@ -24,10 +24,12 @@
 		"@gyro-lang/core": "^0.0.3",
 		"@mdplusplus/core": "^0.1.15",
 		"chokidar": "^3.5.3",
-		"colarg": "^1.0.5",
+		"colarg": "^2.0.0",
+		"digraphe": "^1.0.6",
 		"mathjax": "^3.2.0",
 		"mime-types": "^2.1.35",
-		"showdown": "^2.0.3"
+		"showdown": "^2.0.3",
+		"string-similarity": "^4.0.4"
 	},
 	"bin": {
 		"mppc": "./lib/index.js"

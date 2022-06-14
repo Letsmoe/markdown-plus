@@ -26,10 +26,10 @@ function readParseFile(filename: string, env: any) {
 	}
 	var content = fs.readFileSync(absPath, "utf8");
 	var inlineCode: string[] = [];
-	content = content.replace(/\{%(.*?)%\}/gms, (all, first) => {
+	content = content.replace(/\{%(.*?)%\}/gms, (all, code) => {
 		env.vars.__writeBuffer = "";
-		parseAndEvaluate(first, env);
-		inlineCode.push(first);
+		parseAndEvaluate(code, env);
+		inlineCode.push(code);
 		return env.vars.__writeBuffer;
 	});
 
@@ -48,12 +48,12 @@ function readParseFile(filename: string, env: any) {
 	parseAndEvaluate(inlineCode.join(""), env);
 	const variables = env.vars;
 	// env now contains all variables we need to fill the document.
-	content = content.replace(/\{\{(.*?)\}\}/gm, (all, first) => {
-		let value = variables[first.trim()];
+	content = content.replace(/\{\{(.*?)\}\}/gm, (all, code) => {
+		let value = variables[code.trim()];
 		if (value === undefined) {
 			value = "";
 			issueWarning(
-				`Encountered undefined variable: '${first.trim()}' at ${filename}`
+				`Encountered undefined variable: '${code.trim()}' at ${filename}`
 			);
 			shared.errors++;
 		}
