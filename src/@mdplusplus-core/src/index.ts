@@ -338,24 +338,20 @@ function tryResolveLink(name: string) {
 function createDependencyGraph() {
 	let graph = new Graph();
 	let files = getInputFiles();
-	for (const file of files) {
-		graph.addNode(file);
+	for (let file of files) {
 		let content = readParseFile(file, shared.env);
 		const links = matchMarkdownLinks(content);
-		// We will have to check if there are any links that are duplicates of others since they can look different but resolve to the same file.
-		// Loop through all links and only push to a new array if they don't exist yet.
-
-		for (const link of links) {
-			if (link.type === MarkdownType.AutoResolveLink) {
-				if (link.link) {
-					graph.addEdge(file, link.link);
+		let absoluteFile = path.join(shared.ROOT, file)
+		for (let link of links) {
+			if (link.link) {
+				let absPath = path.join(shared.ROOT, link.link);
+				if (fs.existsSync(absPath)) {
+					graph.addEdge(absoluteFile, absPath);
 				}
-			} else {
-				graph.addEdge(file, link.link);
 			}
 		}
 	}
-	console.log(graph.routes({from: "index.mpp"}).map(x => x.path));
+	return graph;
 }
 
 function run() {
