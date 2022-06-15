@@ -14,7 +14,6 @@ function readParseFile(filename, env) {
     const absPath = path.join(shared.ROOT, filename);
     if (!fs.existsSync(absPath)) {
         issueWarning(`File does not exist at: ${absPath}`);
-        shared.errors++;
         return "";
     }
     var content = fs.readFileSync(absPath, "utf8");
@@ -43,7 +42,6 @@ function readParseFile(filename, env) {
         if (value === undefined) {
             value = "";
             issueWarning(`Encountered undefined variable: '${code.trim()}' at ${filename}`);
-            shared.errors++;
         }
         return value;
     });

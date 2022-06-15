@@ -1,5 +1,5 @@
 import { issueError } from "./console-dispatcher.js";
-import { shared } from "./shared.js";
+import { defaultConfig } from "./shared.js";
 // Create a function that deeply merges two objects
 function deepMerge(target, source) {
     for (let key in source) {
@@ -15,7 +15,7 @@ function deepMerge(target, source) {
     return target;
 }
 function checkConfig(config) {
-    config = deepMerge(shared.config, config);
+    config = deepMerge(defaultConfig, config);
     if (config.outDir == "") {
         issueError("No output directory specified.");
     }

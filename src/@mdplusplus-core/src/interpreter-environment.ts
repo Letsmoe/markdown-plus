@@ -8,8 +8,8 @@ env.def("print", (...args: any[]) => {
 	process.stdout.write(args.join(" ") + "\n");
 });
 
-env.def("setDefaultCSS", (path: string) => {
-	shared.config.css = path;
+env.def("addStyle", (path: string) => {
+	shared.config.css.push(path);
 });
 
 env.def("include", (filename: string) => {

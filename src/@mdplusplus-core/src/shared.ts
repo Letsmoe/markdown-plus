@@ -1,4 +1,4 @@
-import * as showdown from "showdown";
+import Showdown from "showdown";
 import { Environment } from "@gyro-lang/core";
 import { Config } from "./config.js";
 import { env } from "./interpreter-environment.js";
@@ -73,26 +73,94 @@ const footnotesExtension = () => [
 	},
 ];
 
-// @ts-ignore
-showdown.default.extension("footnotes", footnotesExtension);
-// @ts-ignore
-showdown.default.extension("math", mathExtension);
+Showdown.extension("footnotes", footnotesExtension);
+Showdown.extension("math", mathExtension);
+
+const defaultConfig = {
+	outDir: "",
+	rootDir: "",
+	watch: false,
+	include: [".*"],
+	exclude: [],
+	css: [],
+	compilerOptions: {
+		outputHTML: true,
+	},
+	serve: true,
+	serverOptions: {
+		port: 8080,
+		host: "localhost",
+		open: true,
+	},
+	resultModifier: {
+		before: (x) => x,
+		after: (x) => x,
+	},
+	checkAssets: (x) => {
+		let type = mime.lookup(x);
+		if (type) {
+			if (
+				[
+					"image/png",
+					"image/jpeg",
+					"image/gif",
+					"image/svg+xml",
+				].includes(type)
+			) {
+				return true;
+			}
+		}
+	},
+	generateMetadata(metadata : any) {
+		let str = "";
+		for (const key in metadata) {
+			let value = metadata[key];
+			if (key === "title") {
+				str += `<title>${value}</title>`;
+			} else if (key === "description") {
+				str += `<meta name="description" content="${value}">`;
+			} else if (key === "keywords") {
+				str += `<meta name="keywords" content="${value}">`;
+			} else if (key === "author") {
+				str += `<meta name="author" content="${value}">`;
+			} else if (key === "date") {
+				str += `<meta name="date" content="${value}">`;
+			} else if (key === "copyright") {
+				str += `<meta name="copyright" content="${value}">`;
+			} else if (key === "scripts") {
+				for (const script of value) {
+					str += `<script src="${script}"></script>`;
+				}
+			} else if (key === "styles") {
+				for (const style of value) {
+					str += `<link rel="stylesheet" href="${style}">`;
+				}
+			}
+		}
+		return str;
+	},
+	linkValidation: true,
+	wrapper: function(
+		head: string,
+		body: string,
+		metadata: any,
+		source: string
+	) {
+		let str = `<!DOCTYPE html><html><head>${head}${this.generateMetadata(metadata)}</head><body>${body}</body></html>`;
+		return str;
+	},
+};
 
 const shared: {
 	config: Config;
 	ROOT: string;
-	errors: number;
-	warnings: number;
 	converter: showdown.Converter;
 	env: Environment;
 	mj: any;
 } = {
 	mj: undefined,
 	ROOT: "",
-	errors: 0,
-	warnings: 0,
-	// @ts-ignore
-	converter: new showdown.default.Converter({
+	converter: new Showdown.Converter({
 		extensions: ["math", "footnotes"],
 		customizedHeaderId: true,
 		ghCompatibleHeaderId: true,
@@ -105,77 +173,7 @@ const shared: {
 		moreStyling: true,
 	}),
 	env: env,
-	config: {
-		outDir: "",
-		rootDir: "",
-		watch: false,
-		include: [".*"],
-		exclude: [],
-		css: "",
-		compilerOptions: {
-			outputHTML: true,
-		},
-		headerFile: "",
-		resultModifier: {
-			before: (x) => x,
-			after: (x) => x,
-		},
-		checkAssets: (x) => {
-			let type = mime.lookup(x);
-			if (type) {
-				if (
-					[
-						"image/png",
-						"image/jpeg",
-						"image/gif",
-						"image/svg+xml",
-					].includes(type)
-				) {
-					return true;
-				}
-			}
-		},
-		generateMetadata(metadata : any) {
-			let str = "";
-			for (const key in metadata) {
-				let value = metadata[key];
-				if (key === "title") {
-					str += `<title>${value}</title>`;
-				} else if (key === "description") {
-					str += `<meta name="description" content="${value}">`;
-				} else if (key === "keywords") {
-					str += `<meta name="keywords" content="${value}">`;
-				} else if (key === "author") {
-					str += `<meta name="author" content="${value}">`;
-				} else if (key === "date") {
-					str += `<meta name="date" content="${value}">`;
-				} else if (key === "copyright") {
-					str += `<meta name="copyright" content="${value}">`;
-				} else if (key === "scripts") {
-					for (const script of value) {
-						str += `<script src="${script}"></script>`;
-					}
-				} else if (key === "styles") {
-					for (const style of value) {
-						str += `<link rel="stylesheet" href="${style}">`;
-					}
-				}
-			}
-			return str;
-		},
-		linkValidation: true,
-		wrapper: function(
-			head: string,
-			header: string,
-			body: string,
-			footer: string,
-			metadata: any,
-			source: string
-		) {
-			let str = `<!DOCTYPE html><html><head>${head}${this.generateMetadata(metadata)}</head><body>${header}${body}</body>${footer}</html>`;
-			return str;
-		},
-	},
+	config: defaultConfig
 };
 
-export { shared, testInclude };
+export { shared, testInclude, defaultConfig };

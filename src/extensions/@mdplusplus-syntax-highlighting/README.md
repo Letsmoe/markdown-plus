@@ -1,2 +1,2 @@
 # mpp
-A syntax highlighting for the `mpp` programming language.
+A syntax highlighting extension for the `mpp` language.

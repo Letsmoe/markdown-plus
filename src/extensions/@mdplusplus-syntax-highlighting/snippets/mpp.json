@@ -13,5 +13,15 @@
 		"prefix": ["var"],
 		"description": "Embed a variable.",
 		"body": ["{{", "${0:name}", "}}"]
+	},
+	"Insert Table": {
+		"prefix": ["table"],
+		"description": "Insert a table.",
+		"body": ["|", "${0:Column 1}", "|", "${1:Column 2}", "|", "\n| ------- | ------- |\n|", "${2:Value 1}", "|", "${3:Value 2}", "|"]
+	},
+	"Auto resolving Link": {
+		"prefix": ["!"],
+		"description": "Auto resolving link.",
+		"body": ["!`${0:name}`"]
 	}
 }

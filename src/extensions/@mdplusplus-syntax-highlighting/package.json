@@ -14,6 +14,14 @@
         "letsmoe.gyro",
         "vscode.markdown"
     ],
+	"capabilities": {
+		"completionProvider": {
+			"resolveProvider": true,
+			"triggerCharacters": [
+				"!"
+			]
+		}
+	},
     "contributes": {
         "languages": [
             {
@@ -22,7 +30,9 @@
                     "Markdown++"
                 ],
                 "extensions": [
-                    ".mpp"
+                    ".mpp",
+					".md",
+					".mppm"
                 ],
                 "configuration": "./language-configuration.json"
             }

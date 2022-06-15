@@ -6,33 +6,15 @@ class FileWatcher {
 	constructor(watchPath: string, callback: (path: string) => any) {
 		chokidar
 			.watch(watchPath, {persistent: true})
-			.on("add", function (path) {
+			.on("all", function (event, path) {
 				if (testInclude(path)) {
 					callback(path);
 				} else {
 					issueWarning(
-						`File added but was not included in the entry file. Ignoring...`
+						`File was not included in the entry file. Ignoring...`
 					);
 				}
 			})
-			.on("change", function (path) {
-				if (testInclude(path)) {
-					callback(path);
-				} else {
-					issueWarning(
-						`File changed but was not included in the entry file. Ignoring...`
-					);
-				}
-			})
-			.on("unlink", function (path) {
-				if (testInclude(path)) {
-					callback(path);
-				} else {
-					issueWarning(
-						`File removed but was not included in the entry file. Ignoring...`
-					);
-				}
-			});
 	}
 }
 

@@ -13,6 +13,7 @@
  * and replace this kind of syntax with proper markdown links.
  */
 
+import liveServer from "live-server";
 import { colarg } from "colarg";
 import * as fs from "fs";
 import * as stringSimilarity from "string-similarity"
@@ -76,13 +77,13 @@ function makeHTML(txt: string, file: string) {
 	let outputString = "";
 	outputString = shared.converter.makeHtml(txt);
 	outputString = shared.config.resultModifier.after(outputString);
-	const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="${shared.config.css}">`;
+	const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${shared.config.css.map(x => {
+		return `<link rel="stylesheet" href="${x}">`;
+	})}`;
 	const metadata = shared.converter.getMetadata(false);
 	outputString = shared.config.wrapper(
 		head,
-		loadHeaderFile(),
 		outputString,
-		"",
 		metadata,
 		txt
 	);
@@ -136,7 +137,7 @@ function useProject(config: Config) {
 	console.log(`Using project ${args.project}`);
 
 	// Check if the given config follows the required schema. May lead to early exit.
-	shared.config = checkConfig(config);
+	config = shared.config = checkConfig(config);
 	// All paths in the config file are relative to the location of the file so we will just use it's parent directory and redirect from there.
 	shared.ROOT =
 		path.join(process.cwd(), path.dirname(args.project), config.rootDir) ||
@@ -146,6 +147,16 @@ function useProject(config: Config) {
 		// Determine whether a FileWatcher should be assigned to the projects root folder.
 		new FileWatcher(shared.ROOT, run);
 	}
+	// Check whether to launch a live server.
+	if (config.serve === true) {
+		liveServer.start({
+			port: config.serverOptions.port || 8181,
+			root: config.outDir,
+			open: config.serverOptions.open || false,
+			logLevel: 0
+		});
+	}
+
 	run();
 }
 
@@ -169,17 +180,18 @@ if (args.project) {
 			useProject(configData);
 		});
 	}
-} else if (args._default[0]) {
+} else if (args.default && args.default[0]) {
 	const runSingleFile = () => {
 		console.clear();
-		let inputFile = args._default[0];
+		let inputFile = args.default[0];
 		let outputFile: string;
 		
 		if (args.output == "") {
 			outputFile = path.basename(inputFile) + ".html";
 		} else {
-			outputFile = path.resolve(process.cwd(), args.output);
+			outputFile = args.output;
 		}
+		outputFile = path.resolve(process.cwd(), outputFile);
 		console.log(`Compiling ${inputFile} to ${outputFile}`);
 
 		let content = readParseFile(inputFile, shared.env);
@@ -216,19 +228,8 @@ function getInputFiles() {
 		}
 	};
 	recurse(shared.ROOT, "");
-	return files;
+	return [files, files.map(x => path.join(shared.ROOT, x))];
 }
-
-function loadHeaderFile() {
-	if (shared.config.headerFile) {
-		return fs.readFileSync(
-			path.join(shared.ROOT, shared.config.headerFile),
-			"utf8"
-		);
-	}
-	return "";
-}
-
 
 /**
  * A function to resolve any link following this syntax: "!`<name>`" by trying to find a file that might correspond to this name.
@@ -236,35 +237,17 @@ function loadHeaderFile() {
  */
 function resolveLinks(content: string, file: string) {
 	// Get a list of all files inside the source directory.
-	const files = getInputFiles();
+	const [files, absolutePath] = getInputFiles();
 
 	return content.replace(
 		/!`(.*?)`/g,
 		(all, name) => {
-			// Append all file's names to the list of files.
-			let bestMatch: number = 0, bestMatchPath: string;
-			let fileNameList = files.map(x => [x, path.basename(x)]).concat(files.map(x => [x,x]))
-			// Loop through all files trying to find the best matching substring
-			for (const str of fileNameList) {
-				let similarity = stringSimilarity.compareTwoStrings(str[1], name);
-				if (similarity > bestMatch) {
-					bestMatchPath = str[0];
-					bestMatch = similarity;
-				}
-			}
-
-			if (bestMatch > 0.5) {
-				// Get the target file's basename as a title of the link
-				let title = path.parse(path.basename(bestMatchPath)).name;
-				// Get the relative path to the target file
-				let relativePath = "/" + path.relative(shared.ROOT, bestMatchPath);
-				// Change the file extension
-				relativePath = changeExtension(relativePath, shared.config.compilerOptions.outputHTML ? "html" : "md");
-
-				return `[${title}](${relativePath})`;
+			let match = tryResolveLink(name);
+			if (match) {
+				return `[\`${name}\`](${match})`;
 			}
 			issueWarning("Could not find target for: '" + name + "' in (" + file + "), maybe you should be a little more concrete.");
-			return all.substring(1);
+			return `<a class="no-reference">${name}</a>`;
 		}
 	);
 }
@@ -316,7 +299,7 @@ function matchMarkdownLinks(content: string): MarkdownLink[] {
 }
 
 function tryResolveLink(name: string) {
-	const files = getInputFiles();
+	const [files] = getInputFiles();
 	// Append all file's names to the list of files.
 	let score: number = 0, bestMatchPath: string;
 	let fileNameList = files.map(x => [x, path.basename(x)]).concat(files.map(x => [x,x]))
@@ -337,7 +320,7 @@ function tryResolveLink(name: string) {
 
 function createDependencyGraph() {
 	let graph = new Graph();
-	let files = getInputFiles();
+	let [files] = getInputFiles();
 	for (let file of files) {
 		let content = readParseFile(file, shared.env);
 		const links = matchMarkdownLinks(content);
@@ -355,22 +338,24 @@ function createDependencyGraph() {
 }
 
 function run() {
-	shared.errors = 0;
 	let date = new Date();
 	let time = `[${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
 		date.getSeconds()
 	)}]`;
 	let cStart = Date.now();
 	console.clear();
-	createDependencyGraph()
 	process.stdout.write(
 		`${time} File change detected. Starting compilation...\n`
 	);
 
-	const files = getInputFiles();
+	const [files, absoluteFilePaths] = getInputFiles();
 	// Loop through all existing files
-	for (const file of files) {
-		if (file.endsWith("mppm")) {
+	for (let i = 0; i < files.length; i++) {
+		const file = files[i];
+		const absoluteFilePath = absoluteFilePaths[i];
+		const { ext, dir, name } = path.parse(file);
+
+		if (ext === "mppm") {
 			// If the file is a module, we will just continue.
 			process.stdout.write("Skipping module: " + file + "\n");
 			continue;
@@ -427,6 +412,6 @@ function run() {
 
 	let timeTaken = `${Math.round(Date.now() - cStart)}ms`
 	process.stdout.write(
-		`${time} Found ${shared.errors} errors. Took: ${timeTaken}. Watching for file changes...\n`
+		`${time} Compilation Finished. Took: ${timeTaken}. Watching for file changes...\n`
 	);
 }

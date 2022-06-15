@@ -5,8 +5,8 @@ const env = new Environment(null);
 env.def("print", (...args) => {
     process.stdout.write(args.join(" ") + "\n");
 });
-env.def("setDefaultCSS", (path) => {
-    shared.config.css = path;
+env.def("addStyle", (path) => {
+    shared.config.css.push(path);
 });
 env.def("include", (filename) => {
     const content = readParseFile(filename, env);

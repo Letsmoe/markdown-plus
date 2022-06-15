@@ -1,25 +1,35 @@
 import { issueError, issueWarning } from "./console-dispatcher.js";
-import { shared } from "./shared.js";
+import { defaultConfig } from "./shared.js";
 
 interface Config {
-	outDir: string,
-	rootDir?: string,
-	include?: string[],
-	exclude?: string[],
-	css?: string,
-	watch?: boolean,
+	outDir: string;
+	rootDir?: string;
+	include?: string[];
+	exclude?: string[];
+	css?: string[];
+	serve?: boolean;
+	serverOptions?: {
+		port?: number;
+		host?: string;
+		open?: boolean;
+	};
+	watch?: boolean;
 	compilerOptions?: {
-		outputHTML: boolean,
-	},
-	headerFile?: string,
+		outputHTML: boolean;
+	};
 	resultModifier: {
-		before: (content: string) => string,
-		after: (content: string) => string
-	},
-	generateMetadata: (metadata: any) => string,
-	wrapper: (head:string, header:string, body:string, footer:string, metadata: any, source: string) => string,
-	checkAssets?: (file: string) => boolean,
-	linkValidation: boolean
+		before: (content: string) => string;
+		after: (content: string) => string;
+	};
+	generateMetadata: (metadata: any) => string;
+	wrapper: (
+		head: string,
+		body: string,
+		metadata: any,
+		source: string
+	) => string;
+	checkAssets?: (file: string) => boolean;
+	linkValidation: boolean;
 }
 
 // Create a function that deeply merges two objects
@@ -37,12 +47,12 @@ function deepMerge(target: any, source: any) {
 }
 
 function checkConfig(config: Config) {
-	config = deepMerge(shared.config, config);
+	config = deepMerge(defaultConfig, config);
 
 	if (config.outDir == "") {
 		issueError("No output directory specified.");
 	}
-	return config
+	return config;
 }
 
-export {checkConfig, Config}
+export { checkConfig, Config };
