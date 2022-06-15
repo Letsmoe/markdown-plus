@@ -33,6 +33,8 @@ import { checkConfig } from "./config.js";
 import * as mime from "mime-types";
 import { getDependencies } from "./dependencies.js";
 import Graph from "digraphe";
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const parser = new colarg(process.argv.slice(2));
 parser.addOption({
     name: "watch",
@@ -79,9 +81,9 @@ function makeHTML(txt, file) {
     let outputString = "";
     outputString = shared.converter.makeHtml(txt);
     outputString = shared.config.resultModifier.after(outputString);
-    const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${shared.config.css.map(x => {
+    const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${shared.config.css.map((x) => {
         return `<link rel="stylesheet" href="${x}">`;
-    })}`;
+    }).join("\n")}`;
     const metadata = shared.converter.getMetadata(false);
     outputString = shared.config.wrapper(head, outputString, metadata, txt);
     if (shared.config.linkValidation) {
@@ -129,13 +131,21 @@ function useProject(config) {
         // Determine whether a FileWatcher should be assigned to the projects root folder.
         new FileWatcher(shared.ROOT, run);
     }
+    // Create a style folder in the outDir and add a default stylesheet to it.
+    const styleDir = path.join(shared.ROOT, config.outDir, "style");
+    if (!fs.existsSync(styleDir)) {
+        fs.mkdirSync(styleDir);
+    }
+    // Create a main.css file in the style folder.
+    fs.writeFileSync(path.join(styleDir, "main.css"), fs.readFileSync(path.join(__dirname, "../src/includes/style/main.css")));
+    shared.config.css.push("/style/main.css");
     // Check whether to launch a live server.
     if (config.serve === true) {
         liveServer.start({
             port: config.serverOptions.port || 8181,
             root: config.outDir,
             open: config.serverOptions.open || false,
-            logLevel: 0
+            logLevel: 0,
         });
     }
     run();
@@ -208,7 +218,7 @@ function getInputFiles() {
         }
     };
     recurse(shared.ROOT, "");
-    return [files, files.map(x => path.join(shared.ROOT, x))];
+    return [files, files.map((x) => path.join(shared.ROOT, x))];
 }
 /**
  * A function to resolve any link following this syntax: "!`<name>`" by trying to find a file that might correspond to this name.
@@ -222,8 +232,12 @@ function resolveLinks(content, file) {
         if (match) {
             return `[\`${name}\`](${match})`;
         }
-        issueWarning("Could not find target for: '" + name + "' in (" + file + "), maybe you should be a little more concrete.");
-        return `<a class="no-reference">${name}</a>`;
+        issueWarning("Could not find target for: '" +
+            name +
+            "' in (" +
+            file +
+            "), maybe you should be a little more concrete.");
+        return `<a class="no-reference"><code>${name}</code></a>`;
     });
 }
 var MarkdownType;
@@ -233,31 +247,31 @@ var MarkdownType;
     MarkdownType[MarkdownType["AutoResolveLink"] = 2] = "AutoResolveLink";
 })(MarkdownType || (MarkdownType = {}));
 function matchMarkdownLinks(content) {
-    let firstHand = Array.from(content.matchAll(/\[(.*?)\]\((.*?)\)/g)).map(x => {
+    let firstHand = Array.from(content.matchAll(/\[(.*?)\]\((.*?)\)/g)).map((x) => {
         return {
             start: x.index,
             end: x.index + x[0].length,
             name: x[1],
             link: x[2],
-            type: MarkdownType.Link
+            type: MarkdownType.Link,
         };
     });
-    let images = Array.from(content.matchAll(/!\[(.*?)\]\((.*?)\)/g)).map(x => {
+    let images = Array.from(content.matchAll(/!\[(.*?)\]\((.*?)\)/g)).map((x) => {
         return {
             start: x.index,
             end: x.index + x[0].length,
             name: x[1],
             link: x[2],
-            type: MarkdownType.Image
+            type: MarkdownType.Image,
         };
     });
-    let autoResolve = Array.from(content.matchAll(/!`(.*?)`/g)).map(x => {
+    let autoResolve = Array.from(content.matchAll(/!`(.*?)`/g)).map((x) => {
         return {
             start: x.index,
             end: x.index + x[0].length,
             name: x[1],
             link: tryResolveLink(x[1]),
-            type: MarkdownType.AutoResolveLink
+            type: MarkdownType.AutoResolveLink,
         };
     });
     return autoResolve.concat(images).concat(firstHand);
@@ -266,7 +280,9 @@ function tryResolveLink(name) {
     const [files] = getInputFiles();
     // Append all file's names to the list of files.
     let score = 0, bestMatchPath;
-    let fileNameList = files.map(x => [x, path.basename(x)]).concat(files.map(x => [x, x]));
+    let fileNameList = files
+        .map((x) => [x, path.basename(x)])
+        .concat(files.map((x) => [x, x]));
     // Loop through all files trying to find the best matching substring
     for (const str of fileNameList) {
         let similarity = stringSimilarity.compareTwoStrings(str[1], name);
@@ -276,7 +292,7 @@ function tryResolveLink(name) {
         }
     }
     if (score > 0.5) {
-        return bestMatchPath;
+        return changeExtension(bestMatchPath, shared.config.compilerOptions.outputHTML ? "html" : "md");
     }
     return null;
 }
