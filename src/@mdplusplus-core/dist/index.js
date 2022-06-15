@@ -134,7 +134,7 @@ function useProject(config) {
     // Create a style folder in the outDir and add a default stylesheet to it.
     const styleDir = path.join(shared.ROOT, config.outDir, "style");
     if (!fs.existsSync(styleDir)) {
-        fs.mkdirSync(styleDir);
+        fs.mkdirSync(styleDir, { recursive: true });
     }
     // Create a main.css file in the style folder.
     fs.writeFileSync(path.join(styleDir, "main.css"), fs.readFileSync(path.join(__dirname, "../src/includes/style/main.css")));
