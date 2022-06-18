@@ -7,13 +7,14 @@ title: Markdown++ - Introduction
 %}
 
 # Markdown++
-Is a transpiled language for writing documentations implemented in JavaScript embedding the [Gyro](https://continuum-ai.de/docs/gyro) language.
+Is a transpiled language for writing documentations implemented in JavaScript embedding the [Gyro](https://continuum-ai.de/gyro/) language.
 
 ![A screenshot of Markdown++ code](/assets/code-screenshot.png)
 
 {{table}}
 
 ## Features
-Since Markdown++ is transpiled it allows for some features not possible in the orignal [Markdown](https://markdown.de/) language, like:
+Since Markdown++ is transpiled it allows for some features not possible in the orignal [Markdown](https://daringfireball.net/projects/markdown/) language, like:
 
-- !`Auto Link Resolving`
+- !(Auto Link Resolving)
+- !(String Interpolation)

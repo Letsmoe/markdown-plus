@@ -253,7 +253,7 @@ function resolveLinks(content: string, file: string) {
 	// Get a list of all files inside the source directory.
 	const [files, absolutePath] = getInputFiles();
 
-	return content.replace(/!`(.*?)`/g, (all, name) => {
+	return content.replace(/!`(.*?)`/g, (all: string, name: string) => {
 		let match = tryResolveLink(name);
 		if (match) {
 			return `[\`${name}\`](${match})`;
@@ -266,6 +266,19 @@ function resolveLinks(content: string, file: string) {
 				"), maybe you should be a little more concrete."
 		);
 		return `<a class="no-reference"><code>${name}</code></a>`;
+	}).replace(/!\((.*?)\)/g, (all: string, name: string) => {
+		let match = tryResolveLink(name);
+		if (match) {
+			return `[${name}](${match})`;
+		}
+		issueWarning(
+			"Could not find target for: '" +
+				name +
+				"' in (" +
+				file +
+				"), maybe you should be a little more concrete."
+		);
+		return `<a class="no-reference">${name}</a>`;
 	});
 }
 

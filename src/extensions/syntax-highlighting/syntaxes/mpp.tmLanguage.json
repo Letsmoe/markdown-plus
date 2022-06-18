@@ -35,6 +35,23 @@
 			}
 		},
 		{
+			"match": "(!)(`|\\()(.*?)(`|\\))",
+			"captures": {
+				"1": {
+					"name": "punctuation.definition.link.description.begin.markdown"
+				},
+				"2": {
+					"name": "punctuation.definition.raw.markdown"
+				},
+				"3": {
+					"name": "markup.underline.link.markdown"
+				},
+				"4": {
+					"name": "punctuation.definition.raw.markdown"
+				}
+			}
+		},
+		{
 			"include": "text.html.markdown"
 		}
 	],

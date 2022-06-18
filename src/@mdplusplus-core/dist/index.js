@@ -238,6 +238,17 @@ function resolveLinks(content, file) {
             file +
             "), maybe you should be a little more concrete.");
         return `<a class="no-reference"><code>${name}</code></a>`;
+    }).replace(/!\((.*?)\)/g, (all, name) => {
+        let match = tryResolveLink(name);
+        if (match) {
+            return `[${name}](${match})`;
+        }
+        issueWarning("Could not find target for: '" +
+            name +
+            "' in (" +
+            file +
+            "), maybe you should be a little more concrete.");
+        return `<a class="no-reference">${name}</a>`;
     });
 }
 var MarkdownType;
