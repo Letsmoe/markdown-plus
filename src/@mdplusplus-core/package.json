@@ -5,12 +5,8 @@
 	"description": "Compiler for the Markdown++ language",
 	"main": "./lib/index.js",
 	"directories": {
-		"bin": "./dist/"
 	},
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
-		"build": "webpack --config ./webpack.config.cjs",
-		"build:watch": "webpack --config ./webpack.config.cjs --watch",
 		"docs:watch": "mppc -p=./docs/mppconfig.mjs"
 	},
 	"keywords": [
@@ -23,7 +19,6 @@
 	"license": "MIT",
 	"dependencies": {
 		"@gyro-lang/core": "^0.0.3",
-		"@mdplusplus/core": "^0.1.15",
 		"chokidar": "^3.5.3",
 		"colarg": "^2.0.0",
 		"digraphe": "^1.0.6",

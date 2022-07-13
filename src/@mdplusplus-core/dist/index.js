@@ -176,13 +176,13 @@ else if (args.default && args.default[0]) {
         console.clear();
         let inputFile = args.default[0];
         let outputFile;
-        if (args.output == "") {
-            outputFile = path.basename(inputFile) + ".html";
+        if (!args.output) {
+            outputFile = path.parse(inputFile).name + (args.markdown ? ".md" : ".html");
         }
         else {
             outputFile = args.output;
         }
-        outputFile = path.resolve(process.cwd(), outputFile);
+        outputFile = path.join(process.cwd(), outputFile);
         console.log(`Compiling ${inputFile} to ${outputFile}`);
         let content = readParseFile(inputFile, shared.env);
         if (args.markdown === false) {
