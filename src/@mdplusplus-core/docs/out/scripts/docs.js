@@ -1,0 +1,1 @@
+const p={"js":"/scripts/4816fb5152de3f4abd91cb94e3282d85.js","javascript":"/scripts/4816fb5152de3f4abd91cb94e3282d85.js"};for(let e in p){let l=p[e];Array.from(document.querySelectorAll(`code.${e}`)).length>0&&import(l).then((e=>{e.default(document)}))}

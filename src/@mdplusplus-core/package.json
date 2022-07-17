@@ -4,8 +4,7 @@
 	"type": "module",
 	"description": "Compiler for the Markdown++ language",
 	"main": "./lib/index.js",
-	"directories": {
-	},
+	"directories": {},
 	"scripts": {
 		"docs:watch": "mppc -p=./docs/mppconfig.mjs"
 	},
@@ -24,12 +23,13 @@
 		"digraphe": "^1.0.6",
 		"live-server": "^1.2.2",
 		"mathjax": "^3.2.0",
+		"mdp-js-playground": "file:../../packages/mdp-js-playground",
 		"mime-types": "^2.1.35",
 		"showdown": "^2.0.3",
 		"string-similarity": "^4.0.4"
 	},
 	"bin": {
-		"mppc": "./dist/index.js"
+		"mdpc": "./dist/cli/index.js"
 	},
 	"devDependencies": {
 		"@types/mathjax": "^0.0.37",

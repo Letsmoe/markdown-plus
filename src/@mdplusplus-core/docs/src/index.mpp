@@ -3,18 +3,35 @@ title: Markdown++ - Introduction
 ---
 
 {%
-	table = toc("Table of Contents");
+	Markdown = "[Markdown](https://daringfireball.net/projects/markdown/)";
+	Gyro = "[Gyro](https://continuum-ai.de/gyro/)";
+	License = "[MIT License](https://opensource.org/licenses/MIT)"
 %}
 
-# Markdown++
-Is a transpiled language for writing documentations implemented in JavaScript embedding the [Gyro](https://continuum-ai.de/gyro/) language.
+# Introduction
 
-![A screenshot of Markdown++ code](/assets/code-screenshot.png)
+**MarkdownPlus** is a transpiled language for writing documentations using the {{Gyro}} language.
 
-{{table}}
+It was implemented in JavaScript and is ideal for creating API documentation, tutorials and other material.
+MarkdownPlus is fully customizable and has been written with simplicity in mind.
 
-## Features
-Since Markdown++ is transpiled it allows for some features not possible in the orignal [Markdown](https://daringfireball.net/projects/markdown/) language, like:
+- A lightweight {{Markdown}} syntax helps you focus on your content.
+- [[Theme]] files let you fully customize the output.
+- [[Providers]] can deliver custom syntax and modify the content to your liking.
+- [[Backends]] allow you to render the output to multiple languages.
+- MarkdownPlus was written in JavaScript for a huge backlog of possibilities.
+- [[Playgrounds]] let your users experience your documentation interactively.
+- [[Search]] allows for finding your content with ease.
+- [[Automatically Resolving Links]] let you write faster.
 
-- !(Auto Link Resolving)
-- !(String Interpolation)
+This guide will lead you through the intrinsics of MarkdownPlus and show you what it's default settings produce.
+
+## Contributing
+
+MarkdownPlus is an open source project created by @letsmoe, it has been a passion project of mine and i'm grateful for any type of support you want to provide e.g. in it's [GitHub Repository](https://github.com/Letsmoe/markdown-plus).
+The {{Gyro}} language is another project of mine which you can take a look at [here](https://github.com/Letsmoe/gyro), it's definitely worth a look.
+If you want to collaborate on MarkdownPlus, please consider reading the guide on how to [[contribute]].
+
+## License
+
+The MarkdownPlus source code and it's documentation are released under the {{License}}.

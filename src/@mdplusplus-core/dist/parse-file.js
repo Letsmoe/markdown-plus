@@ -1,7 +1,7 @@
 import { shared } from "./shared.js";
 import * as path from "path";
 import * as fs from "fs";
-import { issueWarning } from "./console-dispatcher.js";
+import { warn } from "./console-dispatcher.js";
 import { InputStream, TokenStream, parse, evaluate } from "@gyro-lang/core";
 function parseAndEvaluate(value, env) {
     const stream = new InputStream(value);
@@ -13,7 +13,7 @@ function parseAndEvaluate(value, env) {
 function readParseFile(filename, env) {
     const absPath = path.join(shared.ROOT, filename);
     if (!fs.existsSync(absPath)) {
-        issueWarning(`File does not exist at: ${absPath}`);
+        warn(`File does not exist at: ${absPath}`);
         return "";
     }
     var content = fs.readFileSync(absPath, "utf8");
@@ -41,7 +41,7 @@ function readParseFile(filename, env) {
         let value = variables[code.trim()];
         if (value === undefined) {
             value = "";
-            issueWarning(`Encountered undefined variable: '${code.trim()}' at ${filename}`);
+            warn(`Encountered undefined variable: '${code.trim()}' at ${filename}`);
         }
         return value;
     });

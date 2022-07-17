@@ -1,4 +1,3 @@
-import { readParseFile } from './parse-file.js';
 import { shared } from './shared.js';
 import { Environment } from "@gyro-lang/core";
 const env = new Environment(null);

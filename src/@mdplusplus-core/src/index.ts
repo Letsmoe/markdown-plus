@@ -13,84 +13,230 @@
  * and replace this kind of syntax with proper markdown links.
  */
 
-import liveServer from "live-server";
-import { colarg } from "colarg";
 import * as fs from "fs";
 import * as stringSimilarity from "string-similarity";
 import * as path from "path";
-import { shared, testInclude } from "./shared.js";
-import { readParseFile } from "./parse-file.js";
-import { FileWatcher } from "./file-watcher.js";
-import { issueWarning } from "./console-dispatcher.js";
-import { checkConfig, Config } from "./config.js";
-import * as mime from "mime-types";
-import { getDependencies } from "./dependencies.js";
-import Graph from "digraphe";
-
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const parser = new colarg(process.argv.slice(2));
-parser.addOption({
-	name: "watch",
-	alias: "w",
-	description: "Watch the project for changes and automatically reload.",
-	type: "boolean",
-	defaults: false,
-	required: false,
-});
-parser.addOption({
-	name: "project",
-	alias: "p",
-	description: "A project file to use instead of using default settings.",
-	type: "string",
-	defaults: "",
-	required: false,
-});
-parser.addOption({
-	name: "markdown",
-	alias: "m",
-	description: "Whether or not to output markdown instead of HTML.",
-	type: "boolean",
-	defaults: false,
-	required: false,
-});
-parser.addOption({
-	name: "output",
-	alias: "o",
-	description: "The output file to write to.",
-	type: "string",
-	defaults: "",
-	required: false,
-});
-
-parser.defineUsage("Usage: npx mppc [-p <project>] [-w <true|false>]");
-parser.enableHelp();
-const args = parser.getArgs();
-
-const pad = (str: any) => {
-	return str.toString().padStart(2, "0");
-};
+import { warn } from "./console-dispatcher.js";
+import { Config, validateConfig } from "./config.js";
+import Showdown from "showdown";
+import { Environment, evaluate, InputStream, parse, TokenStream } from "@gyro-lang/core";
+import { DependencyGraph, getDependencies } from "./dependencies/index.js";
+const RESOLVE_SYNTAX = /\[\[(.*?)\]\]/g
 
 const changeExtension = (file: string, ext: string) => {
 	return file.substring(0, file.lastIndexOf(".")) + "." + ext;
 };
 
-function makeHTML(txt: string, file: string) {
-	let outputString = "";
-	outputString = shared.converter.makeHtml(txt);
-	outputString = shared.config.resultModifier.after(outputString);
-	const head = `<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${shared.config.css.map(
-		(x) => {
-			return `<link rel="stylesheet" href="${x}">`;
+type CallbackFunction = (...args: any[]) => void;
+
+Showdown.extension("code-blocks", () => {
+	'use strict';
+	return [
+		{
+			type: "lang",
+			filter: function(text, converter, options) {
+				return text.replace(/```(.*?)\n(.*?)```/gs, (full, one, two) => {
+					return `<pre><code class="${one.split(",").join(" ")}">${two.trim()}</code></pre>`
+				})
+			}
 		}
-	).join("\n")}`;
-	const metadata = shared.converter.getMetadata(false);
-	outputString = shared.config.wrapper(head, outputString, metadata, txt);
-	if (shared.config.linkValidation) {
-		// Check if all links in the file actually have a target, if they begin with http we just assume they exist.
-		outputString = outputString.replace(
+	]
+})
+
+class MarkdownPlusCompiler {
+	private dir: string = "";
+	private listeners: {[key: string]: CallbackFunction[]};
+	private converter: Showdown.Converter = new Showdown.Converter({
+		extensions: ["math", "footnotes", "code-blocks"],
+		customizedHeaderId: true,
+		ghCompatibleHeaderId: true,
+		simplifiedAutoLink: true,
+		strikethrough: true,
+		tables: true,
+		tasklists: true,
+		emoji: true,
+		metadata: true,
+		moreStyling: true,
+		encodeEmails: true,
+		ghMentions: true,
+		parseImgDimensions: true
+	})
+	constructor(private config: Config, root: string) {
+		// Check if the config file is valid, otherwise the program will throw an error and exit.
+		validateConfig(this.config);
+		// All paths in the config file are relative to the location of the file so we will just use it's parent directory and redirect from there.
+		this.dir = root;
+	}
+
+	/**
+	 * Adds an event listener to the compiler which will be fired once the event occurs.
+	 * Valid events are:
+	 *  - change
+	 *  - 
+	 * @date 7/17/2022 - 8:45:53 AM
+	 *
+	 * @param {string} event
+	 * @param {CallbackFunction} callback
+	 */
+	public on(event: string, callback: CallbackFunction): void {
+		if (!this.listeners.hasOwnProperty(event)) {
+			this.listeners[event] = [];
+		}
+		this.listeners[event].push(callback)
+	}
+
+	private readFile(file: string, absolute: boolean = false): string {
+		let content = "";
+		const exists = (file: string) => fs.existsSync(file) && fs.lstatSync(file).isFile();
+		if (absolute) {
+			// We received an absolute path, so we can just read the given path.
+			if (exists(file)) {
+				content = fs.readFileSync(file).toString();
+			}
+		} else {
+			// We received a relative path, we can assume it's inside the dir, so we just join the two paths.
+			let p = path.join(this.dir, file);
+			if (exists(p)) {
+				content = fs.readFileSync(p).toString();
+			}
+		}
+
+		return content;
+	}
+
+	private eval(content: string, env: Environment) {
+		const stream = new InputStream(content);
+		const tokens = new TokenStream(stream)
+		const parsed = parse(tokens);
+		evaluate(parsed, env)
+		return env;
+	}
+
+	public compile(file: string, absolute: boolean = false, env: Environment) {
+		const graph = new DependencyGraph();
+
+		let content: string = this.readFile(file, absolute);
+		const inlineCode: string[] = [];
+		content = content.replace(/\{%(.*?)%\}/gms, (all, code) => {
+			env.vars.__writeBuffer = "";
+			this.eval(code, env);
+			inlineCode.push(code);
+			return env.vars.__writeBuffer;
+		});
+
+		// For supporting a table of contents we need to get all information about the headings in the document.
+		let headingMap = [];
+		let headings = content.matchAll(/^(#+) (.*?)(?:\n|$)/gm);
+		for (let heading of headings) {
+			const level = heading[1].length;
+			const text = heading[2];
+			const id = text.trim().toLowerCase().replace(/\W/g, "_");
+			headingMap.push({ level, text, id });
+		}
+
+		env.def("__headings", headingMap);
+		this.eval(inlineCode.join(""), env);
+		// The environment now contains everything we need to fill the document, we can start replacing inline variables.
+		content = content.replace(/\{\{(.*?)\}\}/gm, (all, code) => {
+			let value = env.vars[code.trim()];
+			if (value === undefined) {
+				value = "";
+				warn(`Encountered undefined variable: '${code.trim()}'`);
+			}
+			return value;
+		});
+
+		if (this.config.autoResolve) {
+			content = this.resolveLinks(content)
+		}
+
+		if (this.config.linkValidation) {
+			content = this.validateLinks(content, file)
+		}
+
+		graph.addNode("current", {})
+		const deps = getDependencies(content)
+		for (const dep of deps) {
+			graph.addNode(dep.name, dep.data)
+			graph.addEdge("current", dep.name)
+		}
+		
+		const html = this.converter.makeHtml(content)
+		
+		const metadata = this.converter.getMetadata(false) as {[key: string]: string}
+
+		return {
+			metadata,
+			html,
+			markdown: content,
+			deps: graph.follow("current")
+		}
+	}
+
+	private findLinkMatch(name: string, files: string[]) {
+		// Append all file's names to the list of files.
+		let score: number = 0,
+			bestMatchPath: string;
+		let fileNameList = files
+			.map((x) => [x, path.basename(x)])
+			.concat(files.map((x) => [x, x]));
+		// Loop through all files trying to find the best matching substring
+		for (const str of fileNameList) {
+			let similarity = stringSimilarity.compareTwoStrings(str[1].toLowerCase(), name.toLowerCase());
+			if (similarity > score) {
+				bestMatchPath = str[0];
+				score = similarity;
+			}
+		}
+
+		if (score > 0.5) {
+			return changeExtension(
+				bestMatchPath,
+				this.config.compilerOptions.outputHTML ? "html" : "md"
+			);
+		}
+		return null;
+	}
+
+	/**
+	 * A function to resolve any link following this syntax: "[[<name>]]" by trying to find a file that might correspond to this name.
+	 * @date 6/14/2022 - 6:53:17 PM
+	 */
+	public resolveLinks(content: string) {
+		const [files] = this.getFiles();
+		return content.replace(RESOLVE_SYNTAX, (all: string, name: string) => {
+			let match = this.findLinkMatch(name, files);
+			if (match) {
+				return `[${name}](${match})`;
+			}
+			warn(`Could not find target for '${name}', maybe you should be a little more concrete.`);
+			return `<a class="no-reference">${name}</a>`;
+		})
+	}
+
+	private getFiles(extension: string = "") {
+		let files = [];
+		// Recursively loop through all the files and push their names into the files array
+		const recurse = (dir: string, parent: string) => {
+			const list = fs.readdirSync(dir);
+			for (const file of list) {
+				const filePath = path.join(dir, file);
+				const relPath = path.join(parent, file);
+
+				const stat = fs.statSync(filePath);
+				if (stat.isDirectory()) {
+					recurse(filePath, relPath);
+				} else if (extension ? relPath.endsWith(extension) : true) {
+					files.push(relPath);
+				}
+			}
+		};
+		recurse(this.dir, "");
+		return [files, files.map((x) => path.join(this.dir, x))];
+	}
+
+	public validateLinks(content: string, file: string) {
+		return content.replace(
 			/<a[^>]*href="([^"]*)"[^>]*>/g,
 			(all, link) => {
 				if (!link) {
@@ -108,7 +254,7 @@ function makeHTML(txt: string, file: string) {
 				}
 
 				let dirname = path.dirname(
-					path.join(shared.ROOT, path.dirname(file), link)
+					path.join(this.dir, path.dirname(file), link)
 				);
 
 				if (fs.existsSync(dirname)) {
@@ -118,12 +264,12 @@ function makeHTML(txt: string, file: string) {
 					if (dir.includes(path.parse(link).name)) {
 						return all;
 					}
-					issueWarning(
+					warn(
 						`Link "${link}" in file "${file}" does not have a valid target.`
 					);
 					return all.replace(/>$/, ' class="no-reference">');
 				} else {
-					issueWarning(
+					warn(
 						`Link "${link}" in file "${file}" does not have a valid target.`
 					);
 					return all.replace(/>$/, ' class="no-reference">');
@@ -131,331 +277,9 @@ function makeHTML(txt: string, file: string) {
 			}
 		);
 	}
-	return outputString;
 }
 
-function useProject(config: Config) {
-	console.log(`Using project ${args.project}`);
 
-	// Check if the given config follows the required schema. May lead to early exit.
-	config = shared.config = checkConfig(config);
-	// All paths in the config file are relative to the location of the file so we will just use it's parent directory and redirect from there.
-	shared.ROOT =
-		path.join(process.cwd(), path.dirname(args.project), config.rootDir) ||
-		path.dirname(args.project);
-	process.chdir(shared.ROOT);
-	if (config.watch == true || args.watch == true) {
-		// Determine whether a FileWatcher should be assigned to the projects root folder.
-		new FileWatcher(shared.ROOT, run);
-	}
 
-	// Create a style folder in the outDir and add a default stylesheet to it.
-	const styleDir = path.join(shared.ROOT, config.outDir, "style");
-	if (!fs.existsSync(styleDir)) {
-		fs.mkdirSync(styleDir, { recursive: true });
-	}
-	// Create a main.css file in the style folder.
-	fs.writeFileSync(
-		path.join(styleDir, "main.css"),
-		fs.readFileSync(path.join(__dirname, "../src/includes/style/main.css"))
-	);
-	shared.config.css.push("/style/main.css");
-
-	// Check whether to launch a live server.
-	if (config.serve === true) {
-		liveServer.start({
-			port: config.serverOptions.port || 8181,
-			root: config.outDir,
-			open: config.serverOptions.open || false,
-			logLevel: 0,
-		});
-	}
-
-	run();
-}
-
-// Check if a project was given, if not check if a default path was given as first argument.
-if (args.project) {
-	const configPath = path.join(process.cwd(), args.project);
-
-	let configMimeType = mime.lookup(configPath);
-
-	if (configMimeType === "application/json") {
-		let rawConfigData = fs.readFileSync(configPath, "utf8");
-		if (rawConfigData !== "") {
-			const config = JSON.parse(rawConfigData);
-			useProject(config);
-		} else {
-			issueWarning("Project file is empty at: " + configPath);
-		}
-	} else if (configMimeType === "application/javascript") {
-		import(configPath).then(async (config: any) => {
-			const configData = config.default;
-			useProject(configData);
-		});
-	}
-} else if (args.default && args.default[0]) {
-	const runSingleFile = () => {
-		console.clear();
-		let inputFile = args.default[0];
-		let outputFile: string;
-
-		if (!args.output) {
-			outputFile = path.parse(inputFile).name + (args.markdown ? ".md" : ".html");
-		} else {
-			outputFile = args.output;
-		}
-		
-		outputFile = path.join(process.cwd(), outputFile);
-		console.log(`Compiling ${inputFile} to ${outputFile}`);
-
-		let content = readParseFile(inputFile, shared.env);
-		if (args.markdown === false) {
-			let html = makeHTML(content, inputFile);
-			fs.writeFileSync(outputFile, html);
-		} else {
-			fs.writeFileSync(outputFile, content);
-		}
-	};
-
-	if (args.watch === true) {
-		new FileWatcher(shared.ROOT, runSingleFile);
-	} else {
-		runSingleFile();
-	}
-}
-
-function getInputFiles() {
-	let files = [];
-	// Recursively loop through all the files and push their names into the files array
-	const recurse = (dir: string, parent: string) => {
-		const list = fs.readdirSync(dir);
-		for (const file of list) {
-			const filePath = path.join(dir, file);
-			const relPath = path.join(parent, file);
-
-			const stat = fs.statSync(filePath);
-			if (stat.isDirectory()) {
-				recurse(filePath, relPath);
-			} else if (testInclude(relPath) && relPath.endsWith("mpp")) {
-				files.push(relPath);
-			}
-		}
-	};
-	recurse(shared.ROOT, "");
-	return [files, files.map((x) => path.join(shared.ROOT, x))];
-}
-
-/**
- * A function to resolve any link following this syntax: "!`<name>`" by trying to find a file that might correspond to this name.
- * @date 6/14/2022 - 6:53:17 PM
- */
-function resolveLinks(content: string, file: string) {
-	// Get a list of all files inside the source directory.
-	const [files, absolutePath] = getInputFiles();
-
-	return content.replace(/!`(.*?)`/g, (all: string, name: string) => {
-		let match = tryResolveLink(name);
-		if (match) {
-			return `[\`${name}\`](${match})`;
-		}
-		issueWarning(
-			"Could not find target for: '" +
-				name +
-				"' in (" +
-				file +
-				"), maybe you should be a little more concrete."
-		);
-		return `<a class="no-reference"><code>${name}</code></a>`;
-	}).replace(/!\((.*?)\)/g, (all: string, name: string) => {
-		let match = tryResolveLink(name);
-		if (match) {
-			return `[${name}](${match})`;
-		}
-		issueWarning(
-			"Could not find target for: '" +
-				name +
-				"' in (" +
-				file +
-				"), maybe you should be a little more concrete."
-		);
-		return `<a class="no-reference">${name}</a>`;
-	});
-}
-
-enum MarkdownType {
-	Image,
-	Link,
-	AutoResolveLink,
-}
-
-interface MarkdownLink {
-	start: number;
-	end: number;
-	link?: string;
-	name: string;
-	type: MarkdownType;
-}
-
-function matchMarkdownLinks(content: string): MarkdownLink[] {
-	let firstHand = Array.from(content.matchAll(/\[(.*?)\]\((.*?)\)/g)).map(
-		(x) => {
-			return {
-				start: x.index,
-				end: x.index + x[0].length,
-				name: x[1],
-				link: x[2],
-				type: MarkdownType.Link,
-			};
-		}
-	);
-	let images = Array.from(content.matchAll(/!\[(.*?)\]\((.*?)\)/g)).map(
-		(x) => {
-			return {
-				start: x.index,
-				end: x.index + x[0].length,
-				name: x[1],
-				link: x[2],
-				type: MarkdownType.Image,
-			};
-		}
-	);
-	let autoResolve = Array.from(content.matchAll(/!`(.*?)`/g)).map((x) => {
-		return {
-			start: x.index,
-			end: x.index + x[0].length,
-			name: x[1],
-			link: tryResolveLink(x[1]),
-			type: MarkdownType.AutoResolveLink,
-		};
-	});
-
-	return autoResolve.concat(images).concat(firstHand);
-}
-
-function tryResolveLink(name: string) {
-	const [files] = getInputFiles();
-	// Append all file's names to the list of files.
-	let score: number = 0,
-		bestMatchPath: string;
-	let fileNameList = files
-		.map((x) => [x, path.basename(x)])
-		.concat(files.map((x) => [x, x]));
-	// Loop through all files trying to find the best matching substring
-	for (const str of fileNameList) {
-		let similarity = stringSimilarity.compareTwoStrings(str[1], name);
-		if (similarity > score) {
-			bestMatchPath = str[0];
-			score = similarity;
-		}
-	}
-
-	if (score > 0.5) {
-		return changeExtension(
-			bestMatchPath,
-			shared.config.compilerOptions.outputHTML ? "html" : "md"
-		);
-	}
-	return null;
-}
-
-function createDependencyGraph() {
-	let graph = new Graph();
-	let [files] = getInputFiles();
-	for (let file of files) {
-		let content = readParseFile(file, shared.env);
-		const links = matchMarkdownLinks(content);
-		let absoluteFile = path.join(shared.ROOT, file);
-		for (let link of links) {
-			if (link.link) {
-				let absPath = path.join(shared.ROOT, link.link);
-				if (fs.existsSync(absPath)) {
-					graph.addEdge(absoluteFile, absPath);
-				}
-			}
-		}
-	}
-	return graph;
-}
-
-function run() {
-	let date = new Date();
-	let time = `[${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
-		date.getSeconds()
-	)}]`;
-	let cStart = Date.now();
-	console.clear();
-	process.stdout.write(
-		`${time} File change detected. Starting compilation...\n`
-	);
-
-	const [files, absoluteFilePaths] = getInputFiles();
-	// Loop through all existing files
-	for (let i = 0; i < files.length; i++) {
-		const file = files[i];
-		const absoluteFilePath = absoluteFilePaths[i];
-		const { ext, dir, name } = path.parse(file);
-
-		if (ext === "mppm") {
-			// If the file is a module, we will just continue.
-			process.stdout.write("Skipping module: " + file + "\n");
-			continue;
-		}
-
-		const dependencies = getDependencies(file);
-		// Loop through the dependencies array and check if the file exists, if so, copy it to the target directory.
-		for (const dependency of dependencies) {
-			// Check if the dependency matches the config includeAssets regexp
-			const dependencyPath = path.join(shared.ROOT, dependency);
-			if (shared.config.checkAssets(dependencyPath)) {
-				if (fs.existsSync(dependencyPath)) {
-					const targetPath = path.join(
-						shared.config.outDir,
-						dependency
-					);
-					const targetDir = path.dirname(targetPath);
-					if (!fs.existsSync(targetDir)) {
-						fs.mkdirSync(targetDir, { recursive: true });
-					}
-					fs.copyFileSync(dependencyPath, targetPath);
-				}
-			}
-		}
-
-		let content = {
-			md: readParseFile(file, shared.env),
-			html: "",
-		};
-
-		// Apply our custom link resolving technique
-		content.md = resolveLinks(content.md, file);
-
-		content.md = shared.config.resultModifier.before(content.md);
-		// Now we will generate the HTML if requested.
-		if (shared.config.compilerOptions.outputHTML) {
-			content.html = makeHTML(content.md, file);
-		}
-		let newPath = path.join(
-			shared.ROOT,
-			shared.config.outDir,
-			changeExtension(
-				file,
-				shared.config.compilerOptions.outputHTML ? "html" : "md"
-			)
-		);
-		fs.mkdir(path.dirname(newPath), { recursive: true }, (err: Error) => {
-			if (err) throw err;
-			fs.writeFileSync(
-				newPath,
-				shared.config.compilerOptions.outputHTML
-					? content.html
-					: content.md
-			);
-		});
-	}
-
-	let timeTaken = `${Math.round(Date.now() - cStart)}ms`;
-	process.stdout.write(
-		`${time} Compilation Finished. Took: ${timeTaken}. Watching for file changes...\n`
-	);
-}
+export default MarkdownPlusCompiler
+export { DependencyGraph } from './dependencies/index.js'

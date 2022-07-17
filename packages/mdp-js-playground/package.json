@@ -1,0 +1,19 @@
+{
+	"name": "mdp-js-playground",
+	"type": "module",
+	"version": "1.0.0",
+	"description": "A playground implementation for MarkdownPlus",
+	"main": "dist/index.min.js",
+	"types": "typings/index.d.ts",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "webpack --config=webpack.config.cjs"
+	},
+	"keywords": [
+		"markdownplus",
+		"mdp",
+		"playground"
+	],
+	"author": "letsmoe",
+	"license": "MIT"
+}

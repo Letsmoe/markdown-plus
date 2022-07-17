@@ -1,5 +1,24 @@
-import { issueError } from "./console-dispatcher.js";
-import { defaultConfig } from "./shared.js";
+import { error } from "./console-dispatcher.js";
+const defaultConfig = {
+    outDir: "./",
+    rootDir: "./",
+    exclude: [],
+    serve: false,
+    serverOptions: {
+        port: 8080,
+        open: true,
+    },
+    compilerOptions: {
+        outputHTML: true,
+    },
+    watch: false,
+    linkValidation: true,
+    autoResolve: true,
+    playgrounds: [{
+            match: ["js", "javascript"],
+            provider: "mdp-js-playground"
+        }]
+};
 // Create a function that deeply merges two objects
 function deepMerge(target, source) {
     for (let key in source) {
@@ -14,11 +33,11 @@ function deepMerge(target, source) {
     }
     return target;
 }
-function checkConfig(config) {
+function validateConfig(config) {
     config = deepMerge(defaultConfig, config);
     if (config.outDir == "") {
-        issueError("No output directory specified.");
+        error("No output directory specified.");
     }
     return config;
 }
-export { checkConfig };
+export { validateConfig, defaultConfig };

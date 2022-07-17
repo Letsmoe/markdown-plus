@@ -1,0 +1,15 @@
+{
+	"watch": true,
+	"rootDir": "./src/",
+	"exclude": ["node_modules"],
+	"autoResolve": true,
+	"compilerOptions": {
+		"outputHTML": true
+	},
+	"serve": true,
+	"serverOptions": {
+		"port": 3000,
+		"open": true
+	},
+	"outDir": "./out/"
+}
