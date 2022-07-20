@@ -1429,5 +1429,9 @@ body {
 		& h4 {
 			font-size: 0.6em;
 		}
+
+		& ul {
+			list-style: revert;
+		}
 	}
 }

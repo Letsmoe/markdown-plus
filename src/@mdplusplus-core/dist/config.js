@@ -8,16 +8,16 @@ const defaultConfig = {
         port: 8080,
         open: true,
     },
-    compilerOptions: {
-        outputHTML: true,
-    },
     watch: false,
     linkValidation: true,
     autoResolve: true,
     playgrounds: [{
             match: ["js", "javascript"],
-            provider: "mdp-js-playground"
-        }]
+            use: "mdp-js-playground"
+        }],
+    backend: "@mdplusplus/html-backend",
+    preprocessors: [],
+    environment: "__default"
 };
 // Create a function that deeply merges two objects
 function deepMerge(target, source) {

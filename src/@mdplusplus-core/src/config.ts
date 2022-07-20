@@ -1,4 +1,4 @@
-import Config from "./config.type.js";
+import {Config} from "./config.type.js";
 import { error, warn } from "./console-dispatcher.js";
 
 const defaultConfig: Config = {
@@ -10,16 +10,16 @@ const defaultConfig: Config = {
 		port: 8080,
 		open: true,
 	},
-	compilerOptions: {
-		outputHTML: true,
-	},
 	watch: false,
 	linkValidation: true,
 	autoResolve: true,
 	playgrounds: [{
 		match: ["js", "javascript"],
-		provider: "mdp-js-playground"
-	}]
+		use: "mdp-js-playground"
+	}],
+	backend: "@mdplusplus/html-backend",
+	preprocessors: [],
+	environment: "__default"
 }
 
 // Create a function that deeply merges two objects

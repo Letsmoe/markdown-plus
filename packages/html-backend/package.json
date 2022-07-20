@@ -1,0 +1,15 @@
+{
+	"name": "@mdplusplus/html-backend",
+	"version": "1.0.0",
+	"type": "module",
+	"description": "The default mdp backend rendering to hTML",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [
+		"mdp"
+	],
+	"author": "letsmoe",
+	"license": "MIT"
+}

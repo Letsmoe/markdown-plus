@@ -1,4 +1,21 @@
-interface Config {
+export interface Preprocessor {
+    use: string;
+    backend?: string;
+    options?: {
+        exclude?: string[];
+        [key: string]: any;
+    };
+    after?: string[];
+    before?: string[];
+}
+export interface Backend {
+    use: string;
+    options?: {
+        exclude?: string[];
+        [key: string]: any;
+    };
+}
+export interface Config {
     /**
      * The directory to output to, relative to the config path.
      * @default "./"
@@ -41,16 +58,6 @@ interface Config {
      */
     watch?: boolean;
     /**
-     * An object specifying options for the compiler to use.
-     */
-    compilerOptions?: {
-        /**
-         * Whether to output the result as HTML or Markdown (false for Markdown).
-         * @default true
-         */
-        outputHTML: boolean;
-    };
-    /**
      * Whether to validate all link targets.
      * If a link is found that directs to a target that could not be found among the local files, a warning is issued.
      * Every link starting with "http://" will be assumed to have a target.
@@ -71,7 +78,24 @@ interface Config {
      */
     playgrounds: {
         match: string[];
-        provider: string;
+        use: string;
     }[];
+    /**
+     * @default ["mdp-math", "mdp-js", "mdp-code", "mdp-tables"]
+     */
+    preprocessors: Preprocessor[] | string[];
+    /**
+     * @default "html"
+     */
+    backend: Backend | string;
+    /**
+     * An environment defines default functions that can be used in conjunction with Gyro.
+     * @default "__default"
+     */
+    environment: {
+        use: string;
+        options: {
+            [key: string]: any;
+        };
+    } | string;
 }
-export default Config;

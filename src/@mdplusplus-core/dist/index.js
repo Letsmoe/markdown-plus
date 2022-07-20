@@ -12,13 +12,14 @@
  * and replace this kind of syntax with proper markdown links.
  */
 import * as fs from "fs";
-import * as stringSimilarity from "string-similarity";
 import * as path from "path";
 import { warn } from "./console-dispatcher.js";
 import { validateConfig } from "./config.js";
 import Showdown from "showdown";
 import { evaluate, InputStream, parse, TokenStream } from "@gyro-lang/core";
-import { DependencyGraph, getDependencies } from "./dependencies/index.js";
+import { getDependencies } from "./dependencies/index.js";
+import { marked } from 'marked';
+import { LinkValidator } from "./LinkValidator.js";
 const RESOLVE_SYNTAX = /\[\[(.*?)\]\]/g;
 const changeExtension = (file, ext) => {
     return file.substring(0, file.lastIndexOf(".")) + "." + ext;
@@ -37,63 +38,30 @@ Showdown.extension("code-blocks", () => {
     ];
 });
 class MarkdownPlusCompiler {
-    constructor(config, root) {
+    constructor(config, configPath = process.cwd()) {
         this.config = config;
         this.dir = "";
-        this.converter = new Showdown.Converter({
-            extensions: ["math", "footnotes", "code-blocks"],
-            customizedHeaderId: true,
-            ghCompatibleHeaderId: true,
-            simplifiedAutoLink: true,
-            strikethrough: true,
-            tables: true,
-            tasklists: true,
-            emoji: true,
-            metadata: true,
-            moreStyling: true,
-            encodeEmails: true,
-            ghMentions: true,
-            parseImgDimensions: true
-        });
+        this.out = "";
         // Check if the config file is valid, otherwise the program will throw an error and exit.
         validateConfig(this.config);
         // All paths in the config file are relative to the location of the file so we will just use it's parent directory and redirect from there.
-        this.dir = root;
-    }
-    /**
-     * Adds an event listener to the compiler which will be fired once the event occurs.
-     * Valid events are:
-     *  - change
-     *  -
-     * @date 7/17/2022 - 8:45:53 AM
-     *
-     * @param {string} event
-     * @param {CallbackFunction} callback
-     */
-    on(event, callback) {
-        if (!this.listeners.hasOwnProperty(event)) {
-            this.listeners[event] = [];
-        }
-        this.listeners[event].push(callback);
-    }
-    readFile(file, absolute = false) {
-        let content = "";
-        const exists = (file) => fs.existsSync(file) && fs.lstatSync(file).isFile();
-        if (absolute) {
-            // We received an absolute path, so we can just read the given path.
-            if (exists(file)) {
-                content = fs.readFileSync(file).toString();
-            }
+        this.dir = path.join(path.dirname(configPath), config.rootDir);
+        this.out = path.join(path.dirname(configPath), config.outDir);
+        // We need to find a suitable backend.
+        if (typeof config.backend == "string") {
+            import(config.backend).then(module => {
+                this.backend = module.default({});
+                this.ready();
+            });
         }
         else {
-            // We received a relative path, we can assume it's inside the dir, so we just join the two paths.
-            let p = path.join(this.dir, file);
-            if (exists(p)) {
-                content = fs.readFileSync(p).toString();
-            }
+            import(config.backend.use).then(module => {
+                this.backend = module.default(config.backend.options);
+                this.ready();
+            });
         }
-        return content;
     }
+    ready() { }
     eval(content, env) {
         const stream = new InputStream(content);
         const tokens = new TokenStream(stream);
@@ -101,9 +69,7 @@ class MarkdownPlusCompiler {
         evaluate(parsed, env);
         return env;
     }
-    compile(file, absolute = false, env) {
-        const graph = new DependencyGraph();
-        let content = this.readFile(file, absolute);
+    compile(content, file, env) {
         const inlineCode = [];
         content = content.replace(/\{%(.*?)%\}/gms, (all, code) => {
             env.vars.__writeBuffer = "";
@@ -134,51 +100,29 @@ class MarkdownPlusCompiler {
         if (this.config.autoResolve) {
             content = this.resolveLinks(content);
         }
-        if (this.config.linkValidation) {
-            content = this.validateLinks(content, file);
-        }
-        graph.addNode("current", {});
         const deps = getDependencies(content);
-        for (const dep of deps) {
-            graph.addNode(dep.name, dep.data);
-            graph.addEdge("current", dep.name);
+        const lexedOutput = marked.lexer(content);
+        var html = marked.parse(content);
+        //var output = this.backend.getOutput(lexedOutput);
+        //var metadata = this.backend.getMetadata(lexedOutput);
+        if (this.config.linkValidation) {
+            html = this.validateLinks(html, file);
         }
-        const html = this.converter.makeHtml(content);
-        const metadata = this.converter.getMetadata(false);
         return {
-            metadata,
+            metadata: {},
             html,
             markdown: content,
-            deps: graph.follow("current")
+            deps: deps
         };
-    }
-    findLinkMatch(name, files) {
-        // Append all file's names to the list of files.
-        let score = 0, bestMatchPath;
-        let fileNameList = files
-            .map((x) => [x, path.basename(x)])
-            .concat(files.map((x) => [x, x]));
-        // Loop through all files trying to find the best matching substring
-        for (const str of fileNameList) {
-            let similarity = stringSimilarity.compareTwoStrings(str[1].toLowerCase(), name.toLowerCase());
-            if (similarity > score) {
-                bestMatchPath = str[0];
-                score = similarity;
-            }
-        }
-        if (score > 0.5) {
-            return changeExtension(bestMatchPath, this.config.compilerOptions.outputHTML ? "html" : "md");
-        }
-        return null;
     }
     /**
      * A function to resolve any link following this syntax: "[[<name>]]" by trying to find a file that might correspond to this name.
      * @date 6/14/2022 - 6:53:17 PM
      */
     resolveLinks(content) {
-        const [files] = this.getFiles();
+        const files = LinkValidator.getAllFiles(this.dir);
         return content.replace(RESOLVE_SYNTAX, (all, name) => {
-            let match = this.findLinkMatch(name, files);
+            let match = LinkValidator.findMatch(name, files);
             if (match) {
                 return `[${name}](${match})`;
             }
@@ -186,25 +130,21 @@ class MarkdownPlusCompiler {
             return `<a class="no-reference">${name}</a>`;
         });
     }
-    getFiles(extension = "") {
-        let files = [];
-        // Recursively loop through all the files and push their names into the files array
-        const recurse = (dir, parent) => {
-            const list = fs.readdirSync(dir);
-            for (const file of list) {
-                const filePath = path.join(dir, file);
-                const relPath = path.join(parent, file);
-                const stat = fs.statSync(filePath);
-                if (stat.isDirectory()) {
-                    recurse(filePath, relPath);
-                }
-                else if (extension ? relPath.endsWith(extension) : true) {
-                    files.push(relPath);
-                }
-            }
-        };
-        recurse(this.dir, "");
-        return [files, files.map((x) => path.join(this.dir, x))];
+    static getAllLinks(content, inline = false) {
+        /**
+         * The content will be given in Markdown, we want to return all links inside the Markdown file.
+         */
+        let links = [];
+        Array.from(content.matchAll(/!?\[.+\]\((.+)\)/gm)).forEach(([full, link]) => {
+            links.push(link);
+        });
+        if (inline) {
+            // If we also want to match inline links, we only need to match those that point to online sources.
+            Array.from(content.matchAll(/[a-z]+:\/\/[[A-Za-z0-9_.\-~?&=%]+/gm)).forEach(([link]) => {
+                links.push(link);
+            });
+        }
+        return links;
     }
     validateLinks(content, file) {
         return content.replace(/<a[^>]*href="([^"]*)"[^>]*>/g, (all, link) => {
@@ -218,23 +158,15 @@ class MarkdownPlusCompiler {
                 link.startsWith("/")) {
                 return all;
             }
-            let dirname = path.dirname(path.join(this.dir, path.dirname(file), link));
-            if (fs.existsSync(dirname)) {
-                let dir = fs
-                    .readdirSync(dirname)
-                    .map((x) => path.parse(x).name);
-                if (dir.includes(path.parse(link).name)) {
-                    return all;
-                }
+            let target = path.join(this.out, (path.dirname(file) + "/").replace(this.dir, ""), link);
+            if (!fs.existsSync(target)) {
                 warn(`Link "${link}" in file "${file}" does not have a valid target.`);
-                return all.replace(/>$/, ' class="no-reference">');
+                return `<a class="no-reference">`;
             }
-            else {
-                warn(`Link "${link}" in file "${file}" does not have a valid target.`);
-                return all.replace(/>$/, ' class="no-reference">');
-            }
+            return all;
         });
     }
 }
 export default MarkdownPlusCompiler;
+export { LinkValidator } from "./LinkValidator.js";
 export { DependencyGraph } from './dependencies/index.js';

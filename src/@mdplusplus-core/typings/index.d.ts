@@ -13,42 +13,29 @@
  */
 import { Config } from "./config.js";
 import { Environment } from "@gyro-lang/core";
-declare type CallbackFunction = (...args: any[]) => void;
 declare class MarkdownPlusCompiler {
     private config;
     private dir;
-    private listeners;
-    private converter;
-    constructor(config: Config, root: string);
-    /**
-     * Adds an event listener to the compiler which will be fired once the event occurs.
-     * Valid events are:
-     *  - change
-     *  -
-     * @date 7/17/2022 - 8:45:53 AM
-     *
-     * @param {string} event
-     * @param {CallbackFunction} callback
-     */
-    on(event: string, callback: CallbackFunction): void;
-    private readFile;
+    private out;
+    private backend;
+    constructor(config: Config, configPath?: string);
+    ready(): void;
     private eval;
-    compile(file: string, absolute: boolean, env: Environment): {
-        metadata: {
-            [key: string]: string;
-        };
+    compile(content: string, file: string, env: Environment): {
+        metadata: {};
         html: string;
         markdown: string;
-        deps: any[];
+        deps: import("./dependencies/dependencies.type.js").Dependency[];
     };
-    private findLinkMatch;
     /**
      * A function to resolve any link following this syntax: "[[<name>]]" by trying to find a file that might correspond to this name.
      * @date 6/14/2022 - 6:53:17 PM
      */
     resolveLinks(content: string): string;
-    private getFiles;
+    static getAllLinks(content: string, inline?: boolean): string[];
     validateLinks(content: string, file: string): string;
 }
 export default MarkdownPlusCompiler;
+export { LinkValidator } from "./LinkValidator.js";
 export { DependencyGraph } from './dependencies/index.js';
+export { Backend, Config, Preprocessor } from "./config.type.js";

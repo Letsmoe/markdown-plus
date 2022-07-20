@@ -1,32 +1,33 @@
 # Summary
 
-[Introduction](/index.html)
+[Introduction](/index.mpp)
 
 # User Guide
 
-- [[Installation]]
+- [Installation](/guide/installation.mpp)
 
 # Reference Guide
 
-- [Command Line Tool](/cli/index.html)
-    - [init](/cli/init.html)
-- [Format](/format/README.html)
-    - [SUMMARY.mpp](/format/summary.html)
-    - [Configuration](format/configuration/README.html)
-        - [General](format/configuration/general.html)
-        - [Preprocessors](format/configuration/preprocessors.html)
-        - [Renderers](format/configuration/renderers.html)
-        - [Environment Variables](format/configuration/environment-variables.html)
-    - [Theme](/format/theme/README.html)
-        - [index.hbs](format/theme/index-hbs.html)
-        - [Syntax highlighting](format/theme/syntax-highlighting.html)
-        - [Editor](format/theme/editor.html)
-    - [MathJax Support](format/mathjax.html)
-    - [Markdown](format/markdown.html)
-- [For Developers](/dev/index.html)
-    - [Preprocessors](/dev/preprocessors.html)
-    - [Alternative Backends](/dev/backends.html)
+- [Command Line Tool](/cli/index.mpp)
+    - [init](/cli/init.mpp)
+- [Format](/format/README.mpp)
+    - [SUMMARY.mpp](/format/summary.mpp)
+    - [Configuration](format/configuration/README.mpp)
+        - [General](/format/configuration/general.mpp)
+        - [Preprocessors](/format/configuration/preprocessors.mpp)
+        - [Renderers](/format/configuration/renderers.mpp)
+        - [Environment Variables](/format/configuration/environment-variables.mpp)
+    - [Theme](/format/theme/README.mpp)
+        - [index.hbs](/format/theme/index-hbs.mpp)
+        - [Syntax highlighting](/format/theme/syntax-highlighting.mpp)
+        - [Editor](/format/theme/editor.mpp)
+    - [MathJax Support](/format/mathjax.mpp)
+    - [Markdown](/format/markdown.mpp)
+- [For Developers](/dev/index.mpp)
+    - [Preprocessors](/dev/preprocessors.mpp)
+    - [Backends](/dev/backends.mpp)
+	- [Renderers](/dev/renderers.mpp)
 
 -----------
 
-[Contributors](misc/contributors.html)
+[Contributors](/misc/contributors.mpp)

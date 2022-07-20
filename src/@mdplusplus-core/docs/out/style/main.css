@@ -1168,4 +1168,7 @@ body .sidebar h3 {
 }
 body .sidebar h4 {
   font-size: 0.6em;
+}
+body .sidebar ul {
+  list-style: revert;
 }/*# sourceMappingURL=main.css.map */
