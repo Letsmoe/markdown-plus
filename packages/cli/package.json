@@ -1,0 +1,33 @@
+{
+	"name": "@mdplusplus/cli",
+	"type": "module",
+	"version": "1.0.0",
+	"description": "A command line interface for compiling MarkdownPlus into Markdown and managing mdp projects.",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"docs:build": "docks build ./test/ --serve"
+	},
+	"keywords": [
+		"markdownplus",
+		"markdown",
+		"compile"
+	],
+	"author": "letsmoe",
+	"license": "MIT",
+	"dependencies": {
+		"@markdownplus/core": "file:../core",
+		"chokidar": "^3.5.3",
+		"colarg": "^2.0.1",
+		"live-server": "^1.2.2",
+		"marked": "^4.0.18"
+	},
+	"bin": {
+		"docks": "dist/index.js"
+	},
+	"devDependencies": {
+		"@types/live-server": "^1.2.1",
+		"@types/marked": "^4.0.3",
+		"@types/node": "^18.0.6"
+	}
+}

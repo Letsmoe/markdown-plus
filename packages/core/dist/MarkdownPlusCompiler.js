@@ -1,20 +1,13 @@
-import * as path from "path";
 import { warn } from "./console-dispatcher.js";
-import { validateConfig } from "./config.js";
-import { Environment, evaluate, InputStream, parse, TokenStream } from "@gyro-lang/core";
+import { evaluate, InputStream, parse, TokenStream } from "@gyro-lang/core";
 import { getDependencies } from "./dependencies/index.js";
 import { LinkValidator } from "./LinkValidator.js";
-const RESOLVE_SYNTAX = /\[\[(.*?)\]\]/g;
+const RESOLVE_SYNTAX = /\[\[(.*?)(?:(?=|)\|(.*?)|)\]\]/g;
+import createEnvironment from "./environments/__default.js";
+const globalEnvironment = createEnvironment();
 class MarkdownPlusCompiler {
-    constructor(config, configPath = process.cwd()) {
-        this.config = config;
-        this.dir = "";
-        this.out = "";
-        // Check if the config file is valid, otherwise the program will throw an error and exit.
-        validateConfig(this.config);
-        // All paths in the config file are relative to the location of the file so we will just use it's parent directory and redirect from there.
-        this.dir = path.join(path.dirname(configPath), config.rootDir);
-        this.out = path.join(path.dirname(configPath), config.outDir);
+    constructor(dir = process.cwd()) {
+        this.dir = dir;
     }
     eval(content, env) {
         const stream = new InputStream(content);
@@ -23,7 +16,7 @@ class MarkdownPlusCompiler {
         evaluate(parsed, env);
         return env;
     }
-    compile(content, file, env = new Environment(null)) {
+    compile(content, env = globalEnvironment) {
         const inlineCode = [];
         content = content.replace(/\{%(.*?)%\}/gms, (all, code) => {
             env.vars.__writeBuffer = "";
@@ -51,9 +44,7 @@ class MarkdownPlusCompiler {
             }
             return value;
         });
-        if (this.config.autoResolve) {
-            content = this.resolveLinks(content);
-        }
+        content = this.resolveLinks(content);
         const deps = getDependencies(content);
         return {
             markdown: content,
@@ -66,13 +57,12 @@ class MarkdownPlusCompiler {
      */
     resolveLinks(content) {
         const files = LinkValidator.getAllFiles(this.dir);
-        return content.replace(RESOLVE_SYNTAX, (all, name) => {
+        return content.replace(RESOLVE_SYNTAX, (all, name, optTitle) => {
             let match = LinkValidator.findMatch(name, files);
             if (match) {
-                return `[${name}](${match.replace(this.dir, "")})`;
+                return `[${optTitle || name}](${match.replace(this.dir, "")})`;
             }
-            warn(`Could not find target for '${name}', maybe you should be a little more concrete.`);
-            return `<a class="no-reference">${name}</a>`;
+            return `<a class="no-reference">${optTitle || name}</a>`;
         });
     }
 }

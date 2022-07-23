@@ -1,21 +1,14 @@
-import * as path from "path";
 import { warn } from "./console-dispatcher.js";
-import { Config, validateConfig } from "./config.js";
 import { Environment, evaluate, InputStream, parse, TokenStream } from "@gyro-lang/core";
 import { getDependencies } from "./dependencies/index.js";
 import { LinkValidator } from "./LinkValidator.js";
-const RESOLVE_SYNTAX = /\[\[(.*?)\]\]/g
+const RESOLVE_SYNTAX = /\[\[(.*?)(?:(?=|)\|(.*?)|)\]\]/g
+import createEnvironment from "./environments/__default.js";
+
+const globalEnvironment = createEnvironment();
 
 class MarkdownPlusCompiler {
-	private dir: string = "";
-	private out: string = "";
-	constructor(private config: Config, configPath: string = process.cwd()) {
-		// Check if the config file is valid, otherwise the program will throw an error and exit.
-		validateConfig(this.config);
-		// All paths in the config file are relative to the location of the file so we will just use it's parent directory and redirect from there.
-		this.dir = path.join(path.dirname(configPath), config.rootDir);
-		this.out = path.join(path.dirname(configPath), config.outDir);
-	}
+	constructor(private dir: string = process.cwd()) {}
 
 	private eval(content: string, env: Environment) {
 		const stream = new InputStream(content);
@@ -25,7 +18,7 @@ class MarkdownPlusCompiler {
 		return env;
 	}
 
-	public compile(content: string, file: string, env: Environment = new Environment(null)) {
+	public compile(content: string, env: Environment = globalEnvironment) {
 		const inlineCode: string[] = [];
 		content = content.replace(/\{%(.*?)%\}/gms, (all, code) => {
 			env.vars.__writeBuffer = "";
@@ -56,9 +49,7 @@ class MarkdownPlusCompiler {
 			return value;
 		});
 
-		if (this.config.autoResolve) {
-			content = this.resolveLinks(content)
-		}
+		content = this.resolveLinks(content)
 
 		const deps = getDependencies(content)
 
@@ -74,13 +65,12 @@ class MarkdownPlusCompiler {
 	 */
 	public resolveLinks(content: string) {
 		const files = LinkValidator.getAllFiles(this.dir);
-		return content.replace(RESOLVE_SYNTAX, (all: string, name: string) => {
+		return content.replace(RESOLVE_SYNTAX, (all: string, name: string, optTitle?: string) => {
 			let match = LinkValidator.findMatch(name, files);
 			if (match) {
-				return `[${name}](${match.replace(this.dir, "")})`;
+				return `[${optTitle || name}](${match.replace(this.dir, "")})`;
 			}
-			warn(`Could not find target for '${name}', maybe you should be a little more concrete.`);
-			return `<a class="no-reference">${name}</a>`;
+			return `<a class="no-reference">${optTitle || name}</a>`;
 		})
 	}
 }

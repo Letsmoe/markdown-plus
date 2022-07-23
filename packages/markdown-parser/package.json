@@ -1,0 +1,21 @@
+{
+	"name": "@snowblind/markdown-compiler",
+	"type": "module",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "flake -p=flake.config.json"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@flake-universal/core": "^1.0.2",
+		"@flake-universal/javascript": "^1.0.1",
+		"flake-javascript": "^1.0.3"
+	},
+	"devDependencies": {
+		"@types/node": "^18.0.6"
+	}
+}

@@ -1,12 +1,9 @@
-import { Config } from "./config.js";
 import { Environment } from "@gyro-lang/core";
 declare class MarkdownPlusCompiler {
-    private config;
     private dir;
-    private out;
-    constructor(config: Config, configPath?: string);
+    constructor(dir?: string);
     private eval;
-    compile(content: string, file: string, env?: Environment): {
+    compile(content: string, env?: Environment): {
         markdown: string;
         dependencies: import("./dependencies/dependencies.type.js").Dependency[];
     };
