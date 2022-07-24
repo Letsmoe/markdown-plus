@@ -1,0 +1,11 @@
+{
+	"contextualLines": 3,
+	"deepSearch": true,
+	"devServer": {
+		"port": 4004
+	},
+	"watch": true,
+	"strictCompare": true,
+	"dir": "./dist/test/",
+	"useDefaultLoaders": true
+}

@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"lib": ["es2020", "DOM"],
+		"outDir": "../dist/",
+		"declaration": true,
+		"declarationDir": "../typings/",
+		"moduleResolution": "node",
+		"downlevelIteration": true,
+		"target": "es6",
+		"module": "es2020",
+		"allowSyntheticDefaultImports": true
+	},
+	"compileOnSave": true
+}

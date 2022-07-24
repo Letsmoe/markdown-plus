@@ -1,5 +1,6 @@
 import { Environment } from "@gyro-lang/core";
-export default function createEnvironment(config, content) {
+import * as fs from "fs";
+export default function createEnvironment() {
     const env = new Environment(null);
     env.def("print", (...args) => {
         process.stdout.write(args.join(" ") + "\n");
@@ -7,6 +8,10 @@ export default function createEnvironment(config, content) {
     env.def("center", (...args) => {
         const content = `<p align="center">${args.join("<br>")}</p>`;
         env.vars.__writeBuffer += content;
+        return content;
+    });
+    env.def("include", (path) => {
+        const content = fs.readFileSync(path, "utf8");
         return content;
     });
     env.def("__headings", []);

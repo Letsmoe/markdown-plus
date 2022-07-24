@@ -1,2 +1,2 @@
-# mpp
-A syntax highlighting extension for the `mpp` language.
+# mdp
+A syntax highlighting extension for the MarkdownPlus language.
