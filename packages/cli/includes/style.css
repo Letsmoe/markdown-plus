@@ -99,7 +99,8 @@ body {
   -webkit-text-size-adjust: 100%;
   margin: 0;
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 300px 1fr 300px;
+  grid-gap: 10px;
   grid-template-rows: auto;
   color: var(--color-fg-default);
   background-color: var(--color-canvas-default);
@@ -112,6 +113,35 @@ body {
 body .inner-body {
   padding: 20px;
   overflow: auto;
+}
+body .toc {
+  height: 100%;
+  padding: 40px 10px;
+}
+body .scrolling-sidebar {
+  width: 100%;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 10px;
+  display: flex;
+  max-height: 100%;
+  flex-direction: column;
+  right: 20px;
+}
+body .scrolling-sidebar .subheading {
+  padding-left: 30px;
+}
+body .scrolling-sidebar .heading {
+  padding-left: 10px;
+}
+body .scrolling-sidebar .heading, body .scrolling-sidebar .subheading {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-left: 2px solid var(--color-border-default);
+}
+body .scrolling-sidebar .heading.active, body .scrolling-sidebar .subheading.active {
+  background-color: var(--color-neutral-muted);
+  border-left: 2px solid var(--color-accent-emphasis);
 }
 body .octicon {
   display: inline-block;
@@ -717,48 +747,38 @@ body blockquote {
   margin-bottom: 16px;
 }
 body ul {
+  list-style: none;
   margin-top: 0;
   margin-bottom: 0;
   padding-left: 2em;
   margin-top: 0;
   margin-bottom: 16px;
+  counter-reset: item;
 }
 body ul ol {
-  list-style-type: lower-roman;
   margin-top: 0;
   margin-bottom: 0;
-}
-body ul ol ol {
-  list-style-type: lower-alpha;
 }
 body ul ul {
   margin-top: 0;
   margin-bottom: 0;
 }
-body ul ul ol {
-  list-style-type: lower-alpha;
-}
 body ol {
+  list-style: none;
   margin-top: 0;
   margin-bottom: 0;
   padding-left: 2em;
   margin-top: 0;
   margin-bottom: 16px;
+  counter-reset: item;
 }
 body ol ol {
-  list-style-type: lower-roman;
   margin-top: 0;
   margin-bottom: 0;
-}
-body ol ol ol {
-  list-style-type: lower-alpha;
 }
 body ol ul {
   margin-top: 0;
   margin-bottom: 0;
-}
-body ol ul ol {
-  list-style-type: lower-alpha;
 }
 body dd {
   margin-left: 0;
@@ -976,6 +996,10 @@ body ol[type=i] {
 body div > ol:not([type]) {
   list-style-type: decimal;
 }
+body li::before {
+  content: counters(item, ".") ". ";
+  counter-increment: item;
+}
 body li > p {
   margin-top: 16px;
 }
@@ -1180,6 +1204,9 @@ body .sidebar h3 {
 body .sidebar h4 {
   font-size: 0.6em;
 }
-body .sidebar ul {
-  list-style: revert;
+body .sidebar > ul, body .sidebar ol {
+  padding-left: 0;
+}
+body .sidebar a.active {
+  color: orange;
 }/*# sourceMappingURL=style.css.map */

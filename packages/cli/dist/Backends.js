@@ -25,7 +25,7 @@ function loadBackend(config, out) {
             .catch((err) => {
             console.error("Error loading backend, '" +
                 name +
-                "' does not exist or it's exported member is not following the reference (https://continuum-ai.de/docs/markdownplus/backends).");
+                "' does not exist or it's exported member is not following the reference (https://continuum-ai.de/docs/markdownplus/backends).\n" + err.message);
             process.exit(1);
         });
     });

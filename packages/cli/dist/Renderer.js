@@ -25,7 +25,7 @@ function loadRenderer(config, out) {
             .catch((err) => {
             console.error("Error loading renderer, '" +
                 name +
-                "' does not exist or it's exported member is not following the reference (https://continuum-ai.de/docs/markdownplus/renderers).");
+                "' does not exist or it's exported member is not following the reference (https://continuum-ai.de/docs/markdownplus/renderers)." + err.message);
             process.exit(1);
         });
     });

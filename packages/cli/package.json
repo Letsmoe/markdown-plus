@@ -17,8 +17,10 @@
 	"license": "MIT",
 	"dependencies": {
 		"@markdownplus/core": "file:../core",
+		"@markdownplus/html-renderer": "file:../styles",
 		"chokidar": "^3.5.3",
 		"colarg": "^2.0.1",
+		"js-yaml": "^4.1.0",
 		"live-server": "^1.2.2",
 		"marked": "^4.0.18"
 	},

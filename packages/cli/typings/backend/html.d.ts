@@ -1,1 +1,4 @@
-export default function (options: any): (content: string) => string;
+export default function (options: any): (content: string) => {
+    content: string;
+    metadata: RegExpMatchArray;
+};

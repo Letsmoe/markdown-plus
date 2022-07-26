@@ -1,1 +1,3 @@
-export default function (options: any, out: string): (content: string, summary: string) => string;
+export default function (options: any, out: string): (content: string, metadata: {
+    [key: string]: any;
+}) => string;

@@ -98,8 +98,16 @@ parser.addCommand({
 				content = preprocessor(content);
 			}
 			// The backend can now do it's job of transforming the markdown into the correct target language.
-			content = backend(content);
-			return { content, dependencies };
+			const backendProcessed = backend(content);
+			content = backendProcessed.content;
+			const metadata = backendProcessed.metadata;
+			return { content, dependencies, metadata };
+		}
+
+		function transformSingleFile(fileContent: string) {
+			const { content, metadata } = transformContent(fileContent);
+			const rendered = renderer(content, metadata)
+			return rendered;
 		}
 
 		function runAll() {
@@ -120,16 +128,11 @@ parser.addCommand({
 			const { content, dependencies } = transformContent(summary);
 			const changes = recurseDeps(dependencies);
 			const summaryContent = applyTargetChanges(changes, content);
-
-			/**
-			 * Create a summary script, that inserts the summary file into the page.
-			 */
-
-			const scripts = path.join(out, "scripts");
-			if (!fs.existsSync(scripts)) {
-				fs.mkdirSync(scripts);
+			const assets = path.join(out, "assets");
+			if (!fs.existsSync(assets)) {
+				fs.mkdirSync(assets);
 			}
-			fs.writeFileSync(path.join(scripts, "summary.js"), `const summary = \`${summaryContent.replace(/\`/g, "\\`")}\`; export default summary;`)
+			fs.writeFileSync(path.join(assets, "summary.html"), summaryContent)
 
 			/**
 			 * Once we know what we're dealing with in the summary we can start looping through all dependencies (all the files the summary links to).
@@ -148,7 +151,7 @@ parser.addCommand({
 								if (fs.existsSync(newPath)) {
 									let file = fs.readFileSync(newPath, 'utf8');
 									// We're lucky, the file exists and we can continue.
-									var { content, dependencies } = transformContent(file)
+									var { content, dependencies, metadata } = transformContent(file)
 									const changes = recurseDeps(dependencies)
 									// We need to reassign all targets, since they would originally point to the markdown input file.
 									content = applyTargetChanges(changes, content);
@@ -159,7 +162,7 @@ parser.addCommand({
 										fs.mkdirSync(path.dirname(outputFile), { recursive: true });
 									}
 									// Now the only thing left is to render the contents and we can write them to file.
-									const rendered = renderer(content)
+									const rendered = renderer(content, metadata)
 									fs.writeFileSync(outputFile, rendered);
 									// Register a new change of targets.
 									targetChanges[dep.data.path] = changeExtension(dep.data.path, "html");
@@ -193,8 +196,19 @@ parser.addCommand({
 		runAll();
 
 		if (watch) {
-			chokidar.watch(root).on("all", (event: string, path: string) => {
+			chokidar.watch(root).on("add", (event: string, file: string) => {
 				runAll()
+			}).on("unlink", (event: string, file: string) => {
+				runAll()
+			}).on("change", (file: string) => {
+				if (!file.match(out)) {
+					// We only need to re-execute on the path that has changed, everything else is just excessive...
+					let fileContent = fs.readFileSync(file, "utf8");
+					let content = transformSingleFile(fileContent);
+					let output = changeExtension(file.replace(root, out), "html");
+					
+					fs.writeFileSync(output, content);
+				}
 			})
 		}
 	})();

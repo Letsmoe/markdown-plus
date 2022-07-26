@@ -24,7 +24,7 @@ const defaultConfig: Config = {
 		use: path.join(__dirname, "preprocessors/labels.js")
 	}],
 	environment: "__default",
-	renderer: path.join(__dirname, "./renderer/baseRenderer.js")
+	renderer: "@markdownplus/html-renderer"
 }
 
 // Create a function that deeply merges two objects

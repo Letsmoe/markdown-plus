@@ -9,11 +9,12 @@
  * @desc The default loader for MarkdownPlus backends.
  */
 
-import { BackendFunction } from "./types/backend.type.js";
 import { Config } from "./types/config.type.js";
 
-function loadRenderer(config: Config, out: string): Promise<BackendFunction> {
-	return new Promise<BackendFunction>((resolve, reject) => {
+type RendererFunction = (content: string, metadata: {[key: string]: any}) => string;
+
+function loadRenderer(config: Config, out: string): Promise<RendererFunction> {
+	return new Promise<RendererFunction>((resolve, reject) => {
 		let name: string,
 			options: any = {};
 		if (typeof config.renderer == "string") {
@@ -31,7 +32,7 @@ function loadRenderer(config: Config, out: string): Promise<BackendFunction> {
 				console.error(
 					"Error loading renderer, '" +
 						name +
-						"' does not exist or it's exported member is not following the reference (https://continuum-ai.de/docs/markdownplus/renderers)."
+						"' does not exist or it's exported member is not following the reference (https://continuum-ai.de/docs/markdownplus/renderers)." + err.message
 				);
 				process.exit(1);
 			});

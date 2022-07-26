@@ -8,7 +8,9 @@
  * @email moritz.utcke@gmx.de
  * @desc The default loader for MarkdownPlus backends.
  */
-import { BackendFunction } from "./types/backend.type.js";
 import { Config } from "./types/config.type.js";
-declare function loadRenderer(config: Config, out: string): Promise<BackendFunction>;
+declare type RendererFunction = (content: string, metadata: {
+    [key: string]: any;
+}) => string;
+declare function loadRenderer(config: Config, out: string): Promise<RendererFunction>;
 export { loadRenderer };

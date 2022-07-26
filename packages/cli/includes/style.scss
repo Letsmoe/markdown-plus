@@ -101,7 +101,8 @@ body {
 	-webkit-text-size-adjust: 100%;
 	margin: 0;
 	display: grid;
-	grid-template-columns: 300px 1fr;
+	grid-template-columns: 300px 1fr 300px;
+	grid-gap: 10px;
 	grid-template-rows: auto;
 	color: var(--color-fg-default);
 	background-color: var(--color-canvas-default);
@@ -114,6 +115,40 @@ body {
 	.inner-body {
 		padding: 20px;
 		overflow: auto;
+	}
+
+	.toc {
+		height: 100%;
+		padding: 40px 10px;
+	}
+	
+	.scrolling-sidebar {
+		width: 100%;
+		position: sticky;
+		top: 10px;
+		display: flex;
+		max-height: 100%;
+		flex-direction: column;
+		right: 20px;
+
+		& .subheading {
+			padding-left: 30px;
+		}
+
+		& .heading {
+			padding-left: 10px;
+		}
+
+		& .heading,.subheading {
+			padding-top: 6px;
+			padding-bottom: 6px;
+			border-left: 2px solid var(--color-border-default);
+
+			&.active {
+				background-color: var(--color-neutral-muted);
+				border-left: 2px solid var(--color-accent-emphasis);
+			}
+		}
 	}
 
 	.octicon {
@@ -850,54 +885,41 @@ body {
 	}
 
 	ul {
+		list-style: none;
 		margin-top: 0;
 		margin-bottom: 0;
 		padding-left: 2em;
 		margin-top: 0;
 		margin-bottom: 16px;
+		counter-reset: item;
+
 
 		ol {
-			list-style-type: lower-roman;
 			margin-top: 0;
 			margin-bottom: 0;
-
-			ol {
-				list-style-type: lower-alpha;
-			}
 		}
 
 		ul {
-			ol {
-				list-style-type: lower-alpha;
-			}
-
 			margin-top: 0;
 			margin-bottom: 0;
 		}
 	}
 
 	ol {
+		list-style: none;
 		margin-top: 0;
 		margin-bottom: 0;
 		padding-left: 2em;
 		margin-top: 0;
 		margin-bottom: 16px;
+		counter-reset: item;
 
 		ol {
-			list-style-type: lower-roman;
 			margin-top: 0;
 			margin-bottom: 0;
-
-			ol {
-				list-style-type: lower-alpha;
-			}
 		}
 
 		ul {
-			ol {
-				list-style-type: lower-alpha;
-			}
-
 			margin-top: 0;
 			margin-bottom: 0;
 		}
@@ -1176,6 +1198,11 @@ body {
 	}
 
 	li {
+		&::before {
+			content: counters(item, ".") ". ";
+			counter-increment: item;
+		}
+
 		>p {
 			margin-top: 16px;
 		}
@@ -1443,8 +1470,12 @@ body {
 			font-size: 0.6em;
 		}
 
-		& ul {
-			list-style: revert;
+		& > ul, ol {
+			padding-left: 0;
+		}
+
+		a.active {
+			color: orange;
 		}
 	}
 }
