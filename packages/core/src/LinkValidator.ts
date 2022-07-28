@@ -57,14 +57,15 @@ class LinkValidator {
 
 	public static findMatch(
 		name: string,
-		files: string[]
+		files: string[],
+		root: string = process.cwd()
 	): string | null {
 		// Append all file's names to the list of files.
 		let score: number = 0,
 			bestMatchPath: string;
 		// Loop through all files trying to find the best matching substring
 		for (const file of files) {
-			let fileName = path.basename(file);
+			let fileName = file.replace(root, "");
 			let similarity = stringSimilarity.compareTwoStrings(
 				fileName.toLowerCase(),
 				name.toLowerCase()

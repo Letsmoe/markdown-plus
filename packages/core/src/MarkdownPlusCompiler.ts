@@ -66,7 +66,7 @@ class MarkdownPlusCompiler {
 	public resolveLinks(content: string) {
 		const files = LinkValidator.getAllFiles(this.dir);
 		return content.replace(RESOLVE_SYNTAX, (all: string, name: string, optTitle?: string) => {
-			let match = LinkValidator.findMatch(name, files);
+			let match = LinkValidator.findMatch(name, files, this.dir);
 			if (match) {
 				return `[${optTitle || name}](${match.replace(this.dir, "")})`;
 			}

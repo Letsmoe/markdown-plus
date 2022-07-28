@@ -2,7 +2,7 @@ import path from "path";
 import * as fs from 'fs';
 import __dirname from "./__dirname.js";
 const defaultConfig = {
-    outDir: "./",
+    outDir: "./out/",
     rootDir: "./",
     exclude: [],
     serve: false,

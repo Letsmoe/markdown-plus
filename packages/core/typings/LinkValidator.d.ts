@@ -11,7 +11,7 @@ declare class LinkValidator {
     static isOnline(link: string): boolean;
     static isFile(link: string, onlyFile?: boolean): boolean;
     static getAllFiles(folder: string, depth?: number, curr?: number): string[];
-    static findMatch(name: string, files: string[]): string | null;
+    static findMatch(name: string, files: string[], root?: string): string | null;
     static validate(link: string, config?: ValidationConfig): Promise<boolean>;
     validate(link: string): Promise<boolean>;
 }

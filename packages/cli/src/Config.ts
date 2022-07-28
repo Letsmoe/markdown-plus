@@ -4,7 +4,7 @@ import { Config } from "./types/config.type.js";
 import __dirname from "./__dirname.js";
 
 const defaultConfig: Config = {
-	outDir: "./",
+	outDir: "./out/",
 	rootDir: "./",
 	exclude: [],
 	serve: false,

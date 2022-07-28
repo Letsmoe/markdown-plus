@@ -48,12 +48,12 @@ class LinkValidator {
         }
         return final;
     }
-    static findMatch(name, files) {
+    static findMatch(name, files, root = process.cwd()) {
         // Append all file's names to the list of files.
         let score = 0, bestMatchPath;
         // Loop through all files trying to find the best matching substring
         for (const file of files) {
-            let fileName = path.basename(file);
+            let fileName = file.replace(root, "");
             let similarity = stringSimilarity.compareTwoStrings(fileName.toLowerCase(), name.toLowerCase());
             if (similarity > score) {
                 bestMatchPath = file;
