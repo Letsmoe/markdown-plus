@@ -1,14 +1,18 @@
 {
 	"compilerOptions": {
+		"target": "ES2015",
 		"lib": ["es2020", "DOM"],
+		"module": "es2020",
+		"sourceMap": true,
 		"outDir": "../dist/",
 		"declaration": true,
+		"declarationMap": true,
 		"declarationDir": "../typings/",
 		"moduleResolution": "node",
-		"downlevelIteration": true,
-		"target": "es6",
-		"module": "es2020",
-		"allowSyntheticDefaultImports": true
+		"jsxFactory": "Snowblind.make",
+		"jsxFragmentFactory": "Snowblind.Fragment",
+		"jsx": "react",
 	},
-	"compileOnSave": true
+	"compileOnSave": true,
+	"exclude": ["node_modules"]
 }

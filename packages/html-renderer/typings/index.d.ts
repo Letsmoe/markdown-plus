@@ -1,1 +1,5 @@
-export default function render(content: string, options: any): string;
+/**
+ * Load the default markdown into the markdown body.
+ */
+export {};
+//# sourceMappingURL=index.d.ts.map

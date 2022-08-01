@@ -11,6 +11,6 @@
 import { Config } from "./types/config.type.js";
 declare type RendererFunction = (content: string, metadata: {
     [key: string]: any;
-}) => string;
+}, config: Config) => string;
 declare function loadRenderer(config: Config, out: string): Promise<RendererFunction>;
 export { loadRenderer };

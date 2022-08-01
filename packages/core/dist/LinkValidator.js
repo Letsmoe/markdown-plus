@@ -54,7 +54,14 @@ class LinkValidator {
         // Loop through all files trying to find the best matching substring
         for (const file of files) {
             let fileName = file.replace(root, "");
-            let similarity = stringSimilarity.compareTwoStrings(fileName.toLowerCase(), name.toLowerCase());
+            let similarity = 0;
+            if (fileName.match("/")) {
+                // If the file name includes a slash we want to match a whole path starting from the root, otherwise we only want to match the filename.
+                similarity = stringSimilarity.compareTwoStrings(fileName.toLowerCase(), name.toLowerCase());
+            }
+            else {
+                similarity = stringSimilarity.compareTwoStrings(path.basename(fileName).toLowerCase(), name.toLowerCase());
+            }
             if (similarity > score) {
                 bestMatchPath = file;
                 score = similarity;

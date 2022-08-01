@@ -23,13 +23,13 @@ export default function renderer(
 	// Move the content script into the scripts folder.
 	fs.copyFileSync(path.join(__dirname, "../dist/index.prod.js"), path.join(scripts, "index.js"));
 
-	return function (content: string, metadata: any) {
-		const meta = [];
+	return function (content: string, metadata: any, config: any) {
+		fs.writeFileSync(path.join(scripts, "config.json"), JSON.stringify(config));
+		// The title is important, it should always be present.
+		const meta = [`<title>${metadata["title"] || ""} | ${config["title"] || "Documentation"}</title>`];
 		for (const key in metadata) {
 			const value = metadata[key];
-			if (key == "title") {
-				meta.push(`<title>${value}</title>`);
-			} else if (key == "styles") {
+			if (key == "styles") {
 				value.map(x => meta.push(`<link rel="stylesheet" href="${x}" />`));
 			} else {
 				meta.push(`<meta name="${key}" content="${value}"></meta>`)
@@ -37,7 +37,7 @@ export default function renderer(
 		}
 
 		const head = `<head><link rel="stylesheet" href="/style/main.css">${meta.join("")}</head>`;
-		const body = `<body><div class="markdown-body">${content}</div><script src="/scripts/index.js"></script></body>`;
+		const body = `<body><div class="markdown-body">${content}</div><script src="/scripts/index.js"></></body>`;
 
 		return `<!DOCTYPE html><html>${head}${body}</html>`
 	};

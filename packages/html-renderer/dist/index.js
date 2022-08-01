@@ -1,14 +1,15 @@
-export default function render(content, options) {
-    return `<!DOCTYPE html>
-	<html>
-		<head>
-			<link rel="stylesheet" type="text/css" href="/style/main.css">
-		</head>
-		<body>
-			<div id="sidebar" class="sidebar"></div>
-			<div class="inner-body">${content}</div>
-		</body>
-		<script src="/scripts/docs.js"></script>
-		<script src="/scripts/summary.js"></script>
-	</html>`;
-}
+/**
+ * Load the default markdown into the markdown body.
+ */
+import { Snowblind } from "@snowblind/core";
+import { Header } from "./Header.js";
+import { Footer } from "./Footer.js";
+import { Sidebar } from "./Sidebar.js";
+import { Toc } from "./Toc.js";
+window.onload = () => {
+    Snowblind.render(document.body, Snowblind.make(Header, null));
+    Snowblind.render(document.body, Snowblind.make(Sidebar, null));
+    Snowblind.render(document.body, Snowblind.make(Footer, null));
+    Snowblind.render(document.body, Snowblind.make(Toc, null));
+};
+//# sourceMappingURL=index.js.map

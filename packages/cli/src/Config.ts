@@ -1,11 +1,27 @@
 import path from "path";
-import * as fs from 'fs';
+import * as fs from "fs";
 import { Config } from "./types/config.type.js";
 import __dirname from "./__dirname.js";
 
 const defaultConfig: Config = {
-	outDir: "./out/",
-	rootDir: "./",
+	themeConfig: {
+		logo: "",
+		nav: [],
+		footer: {
+			message: "",
+			copyright: "",
+		},
+		editLink: {
+			pattern: "",
+			text: "",
+		},
+		docFooter: {
+			prev: "",
+			next: "",
+		},
+	},
+	out: "./out/",
+	title: "",
 	exclude: [],
 	serve: false,
 	serverOptions: {
@@ -15,56 +31,82 @@ const defaultConfig: Config = {
 	watch: false,
 	linkValidation: true,
 	autoResolve: true,
-	playgrounds: [{
-		match: ["js", "javascript"],
-		use: "mdp-js-playground"
-	}],
+	playgrounds: [
+		{
+			match: ["js", "javascript"],
+			use: "mdp-js-playground",
+		},
+	],
 	backend: path.join(__dirname, "./backend/html.js"),
-	preprocessors: [{
-		use: path.join(__dirname, "preprocessors/labels.js")
-	}],
+	preprocessors: [
+		{
+			use: path.join(__dirname, "preprocessors/labels.js"),
+		},
+	],
 	environment: "__default",
-	renderer: "@markdownplus/html-renderer"
+	renderer: "@markdownplus/html-renderer",
+	head: [],
+};
+
+/**
+ * Simple object check.
+ * @param item
+ * @returns {boolean}
+ */
+function isObject(item: Config): boolean {
+	return item && typeof item === "object" && !Array.isArray(item);
 }
 
-// Create a function that deeply merges two objects
-function deepMerge(target: any, source: any) {
-	for (let key in source) {
-		if (source.hasOwnProperty(key)) {
-			if (typeof source[key] === "object") {
-				target[key] = deepMerge(target[key], source[key]);
+/**
+ * Deep merge two objects.
+ * @param target
+ * @param ...sources
+ */
+function deepMerge(target: Config, ...sources: Config[]) {
+	if (!sources.length) return target;
+	const source = sources.shift();
+
+	if (isObject(target) && isObject(source)) {
+		for (const key in source) {
+			if (isObject(source[key])) {
+				if (!target[key]) Object.assign(target, { [key]: {} });
+				deepMerge(target[key], source[key]);
 			} else {
-				target[key] = source[key];
+				Object.assign(target, { [key]: source[key] });
 			}
 		}
 	}
-	return target;
+
+	return deepMerge(target, ...sources);
 }
 
 function validateConfig(config: Config) {
 	config = deepMerge(defaultConfig, config);
 
-	if (config.outDir == "") {
+	if (config.out == "") {
 		console.error("No output directory specified.");
 	}
 	return config;
 }
 
 function loadConfig(root: string): Config {
+	/**
+	 * The config will be located inside the .docks folder (.docks/config.json)
+	 */
 	if (!path.isAbsolute(root)) {
 		root = path.join(process.cwd(), root);
 	}
-	let file = path.join(root, 'docks.json');
-	return loadConfigFile(file)
+	let file = path.join(root, ".docks", "config.json");
+	return loadConfigFile(file);
 }
 
 function loadConfigFile(file: string) {
 	if (!fs.existsSync(file)) {
-		console.error("The project file " + file + " does not exist.");
+		console.error("The project file '" + file + "' does not exist.");
 		process.exit(1);
 	}
 
-	return JSON.parse(fs.readFileSync(file, 'utf-8'));
+	return JSON.parse(fs.readFileSync(file, "utf-8"));
 }
 
-export { loadConfigFile, loadConfig, validateConfig }
+export { loadConfigFile, loadConfig, validateConfig };

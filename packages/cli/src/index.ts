@@ -9,7 +9,7 @@ parser.addOption({
 	name: "project",
 	alias: "p",
 	required: false,
-	description: "The project file to use.",
+	description: "The root folder of the project.",
 	type: "string",
 	defaults: ""
 })

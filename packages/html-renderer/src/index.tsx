@@ -2,7 +2,7 @@
  * Load the default markdown into the markdown body.
  */
 
-import { Snowblind } from "@snowblind/core";
+import { applyState, Snowblind } from "@snowblind/core";
 import { Header } from "./Header.js";
 import { Footer } from "./Footer.js";
 import { Sidebar } from "./Sidebar.js";

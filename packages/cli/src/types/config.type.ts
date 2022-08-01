@@ -7,12 +7,7 @@ export interface Config {
 	 * The directory to output to, relative to the config path.
 	 * @default "./"
 	 */
-	outDir: string;
-	/**
-	 * The root directory of the documentation.
-	 * @default "./"
-	 */
-	rootDir?: string;
+	out: string;
 	/**
 	 * An array of Regular Expressions to exclude parts of the documentation, every match will be ignored.
 	 * The Regular Expression will be assumed to be global, meaning "node_modules" would match a file path like "/docs/main/node_modules/nothing.mpp"
@@ -99,4 +94,38 @@ export interface Config {
 	 * @default "@mdplusplus/html-renderer"
 	 */
 	renderer: string | Renderer;
+
+	/**
+	 * The projects title, will be appended after the site title ({site_title} | {title})
+	 * @default ""
+	 */
+	title: string;
+	/**
+	 * A list of elements to append to the head when generating the page.
+	 */
+	head: [string, {[key: string]: string | number}][]
+
+	/**
+	 * The configuration to apply to the renderer.
+	 * @default {}
+	 */
+	themeConfig: {
+		logo: string;
+		nav: {
+			text: string;
+			link: string;
+		}[];
+		footer: {
+			message: string;
+			copyright: string;
+		};
+		editLink: {
+			pattern: string;
+			text: string;
+		};
+		docFooter: {
+			prev: string;
+			next: string;
+		}
+	}
 }

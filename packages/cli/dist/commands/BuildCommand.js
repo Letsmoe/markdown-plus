@@ -13,7 +13,7 @@ import * as fs from "fs";
 import { DependencyType } from "../types/dependencies.type.js";
 import { loadRenderer } from "../Renderer.js";
 import chokidar from "chokidar";
-import { loadConfig, loadConfigFile, validateConfig } from "../Config.js";
+import { loadConfig, validateConfig } from "../Config.js";
 import { loadSummaryFile } from "../summary.js";
 import { MarkdownPlusCompiler } from "@markdownplus/core";
 import path from "path";
@@ -22,18 +22,16 @@ import { Context } from "../shared.js";
 export default function buildCommand(args) {
     const startServer = args.serve || false;
     const watch = args.watch || false;
-    let root = process.cwd();
-    if (args.default && args.default.length == 1) {
-        root = getRoot(args.default[0]);
-    }
+    let root = args.project || process.cwd();
     /**
      * We need to load the config before doing anything else.
      * The config contains information about the backends, preprocessors and the renderer to use.
      * Loading these is asynchronous.
      */
-    var config = args.project ? loadConfigFile(args.project) : loadConfig(root);
+    var config = loadConfig(root);
     config = validateConfig(config);
-    const out = path.join(root, config.outDir);
+    var summary = loadSummaryFile(root);
+    const out = path.join(root, config.out);
     // We need to generate the output folder if it doesn't exist.
     if (!fs.existsSync(out)) {
         fs.mkdirSync(out);
@@ -65,15 +63,21 @@ export default function buildCommand(args) {
             const backendProcessed = backend(content);
             content = backendProcessed.content;
             const metadata = backendProcessed.metadata;
-            return { content, dependencies, metadata };
+            return { content, dependencies, metadata: metadata || {} };
         }
         function transformSingleFile(fileContent) {
             const { content, dependencies, metadata } = transformContent(fileContent);
-            const rendered = renderer(content, metadata);
+            const rendered = renderer(content, metadata, config);
             return { rendered, dependencies };
         }
         function runAll() {
-            const summary = loadSummaryFile(root);
+            /**
+             * Find the .docks folder and get all of its contents.
+             * This will suffice as configuration data, we can find the config inside of it (.docks/config.json)
+             */
+            const docksFolder = path.join(root, ".docks");
+            if (fs.existsSync(docksFolder)) {
+            }
             /**
              * We need to have a summary file, this is where we base all our assumptions about the directory structure off.
              * If it does not exist we will have to exit.
@@ -125,7 +129,7 @@ export default function buildCommand(args) {
                                         fs.mkdirSync(path.dirname(outputFile), { recursive: true });
                                     }
                                     // Now the only thing left is to render the contents and we can write them to file.
-                                    const rendered = renderer(content, metadata);
+                                    const rendered = renderer(content, metadata, config);
                                     fs.writeFileSync(outputFile, rendered);
                                     // Register a new change of targets.
                                     targetChanges[dep.data.path] = changeExtension(dep.data.path, "html");
@@ -170,29 +174,45 @@ export default function buildCommand(args) {
                 Context.log(deps.length + " dependencies were followed.");
                 Context.log(nested.length + " nested dependencies were followed.");
             }
-            chokidar.watch(root).on("add", (event, file) => {
-                runAndRenderOutput();
-            }).on("unlink", (event, file) => {
-                runAndRenderOutput();
-            }).on("change", (file) => {
-                if (file.match(/SUMMARY\.md/g)) {
+            function captureFileChange(event, file) {
+                /**
+                 * If the change occurred in the .docks folder we need to reload all necessary files.
+                 */
+                if (file.match(/\.docks/g)) {
+                    Context.Clear();
+                    Context.PrintHeaders();
+                    Context.log("Reloading configuration files...");
+                    // Reload the config
+                    config = loadConfig(root);
+                    config = validateConfig(config);
+                    summary = loadSummaryFile(root);
                     runAndRenderOutput();
                     return;
                 }
-                if (!file.match(out)) {
-                    const stop = Context.Measure();
-                    Context.Clear();
-                    Context.PrintHeaders();
-                    Context.log("File change detected, compiling...");
-                    // We only need to re-execute on the path that has changed, everything else is just excessive...
-                    let fileContent = fs.readFileSync(file, "utf8");
-                    let { rendered, dependencies } = transformSingleFile(fileContent);
-                    let output = changeExtension(file.replace(root, out), "html");
-                    Context.log("Compilation Finished. Took " + stop() + "ms");
-                    Context.log(dependencies.length + " dependencies were followed.");
-                    fs.writeFileSync(output, rendered);
+                if (event === "add" || event === "unlink") {
+                    runAndRenderOutput();
                 }
-            });
+                else if (event === "change") {
+                    if (file.match(/SUMMARY\.md/g)) {
+                        runAndRenderOutput();
+                        return;
+                    }
+                    if (!file.match(out)) {
+                        const stop = Context.Measure();
+                        Context.Clear();
+                        Context.PrintHeaders();
+                        Context.log("File change detected, compiling...");
+                        // We only need to re-execute on the path that has changed, everything else is just excessive...
+                        let fileContent = fs.readFileSync(file, "utf8");
+                        let { rendered, dependencies } = transformSingleFile(fileContent);
+                        let output = changeExtension(file.replace(root, out), "html");
+                        Context.log("Compilation Finished. Took " + stop() + "ms");
+                        Context.log(dependencies.length + " dependencies were followed.");
+                        fs.writeFileSync(output, rendered);
+                    }
+                }
+            }
+            chokidar.watch(root).on("all", captureFileChange);
         }
     }))();
 }
